@@ -128,3 +128,21 @@ pred_air |>
   geom_errorbar(aes(ymin = .pred_lower, ymax = .pred_upper)) +
   theme_bw()
 ```
+
+
+```{r}
+library(yardstick)
+library(gt)
+library(tidyverse)
+
+env_fun <- metric_set(mae, rmse, rsq)
+
+lm_mod |> 
+  augment(new_data = air) |> 
+  group_by(month) |> 
+  env_fun(truth = ozone, estimate = .pred) |> 
+  pivot_wider(names_from = .metric, values_from = .estimate) |> 
+  select(-.estimator) |> 
+  gt() |> 
+  fmt_number(n_sigfig = 3) 
+```
