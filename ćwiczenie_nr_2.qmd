@@ -1,0 +1,221 @@
+---
+title: "Ćwiczenie [2]"
+author: "Mateusz Rzeszutek"
+format: 
+  html:
+    self-contained: true
+    toc: true
+    toc-depth: 4
+    toc-location: right
+    toc-title: "Spis treści"
+    number-sections: true
+    number-depth: 4
+    code-fold: show
+    code-summary: "Show the code"
+    code-tools: true
+    code-block-bg: true
+    code-block-border-left: "black"
+    code-line-numbers: false
+    code-copy: true
+    smooth-scroll: true
+    anchor-sections: true
+    link-external-icon: true
+    link-external-newwindow: true
+    theme:
+        light: cosmo
+        dark: darkly
+    fontsize: 1.0em
+    linestretch: 1.5
+editor: 
+  markdown: 
+    wrap: 72
+execute:
+  warning: false
+  echo: true
+  error: false
+editor_options: 
+  chunk_output_type: console
+---
+
+## Ćwiczenie \[2\]
+
+Przyjrzymy się danym `mydata` z pakietu `openair`. Na podstawie tego
+zbioru danych spróbujemy zbudować model klasyfikacji. Będzie on
+przewidywał, czy stężenia ozonu było wysokie, czy było niskie. Zanim
+zdefiniujemy co oznacza "wysokie" i "niskie" przyjrzymy się zestawowi
+naszych danych.
+
+Potrzebujemy pakietu `openair` jest w nim dostępny ciekawy zestaw danych
+oraz kilka przydatnych funkcji analizy danych o jakości powietrza.
+
+```{r}
+library(tidymodels)
+library(skimr)
+library(GGally)
+library(openair)
+tidymodels_prefer()
+```
+
+Wczytujemy nasze dane, wybieramy jeden rok i przyglądamy się im. Zanim
+wykonasz ten krok zapoznaj się z dokumentacją zestawu danych `mydata`.
+
+```{r}
+air <- mydata |> selectByDate(year = 2002)
+air |> skim()
+```
+
+W zbiorze danych znajdują się zmienne typu `numeric` oraz `POSIXct`.
+Dane charakteryzują się wysoką kompletnością. W tym przypadku usuniemy
+brakujące dane. Teoretycznie powinna być wykonana.
+
+```{r}
+air <- air |> na.omit()
+```
+
+Pytania: które zmienne są ważne w predykcji stężeń ozonu? Zgodnie z
+aktualnym stanem wiedzy istotne są parametry meteorologiczne, grupy
+czasu oraz tlenki azotu (przemiany chemiczne). Na wszelki wypadek
+przyjrzyjmy się wartością współczynników korelacji.
+
+```{r}
+set.seed(222)
+air[sample(1:nrow(air), size = 300, replace = F),] |> 
+  select(nox, no2) |> 
+  ggpairs()
+
+
+library(ggpubr)
+# wykres regresji liniowej, do sprawdzenia danych 
+set.seed(222)
+air[sample(1:nrow(air), size = 300, replace = F),] |> 
+  select(nox, no2) |> 
+  ggplot(aes(nox, no2)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = T, formula = y ~ x) + 
+  stat_cor(label.x = 10, label.y = 80) + 
+  stat_regline_equation(label.x = 10, label.y = 82) +
+  theme_bw()
+```
+
+Wydaje się, że nasze założenia są poprawne. Zauważ, że nox i no2 są
+mocno skorelowane.
+
+Przyjrzymy się stężeniom ozonu.
+
+```{r}
+air |> 
+  ggplot(aes(date, o3)) +
+    geom_line() +
+    theme_bw()
+```
+
+Przyjmijmy założenie, że wysokie stężenia ozonu, to o3 \> 10 ug/m3. A
+niskie to O3 \< 10 ug/m3. Skorzystamy z podstawowej funkcji cut.
+
+```{r}
+air |> pull(o3) |> range()
+
+air <- air |> 
+  mutate(ozone = cut(o3, 
+                     breaks = c(-0.1, 10, 53), 
+                     labels = c("Niskie", "Wysokie")))
+```
+
+Sprawdzamy:
+
+```{r}
+air |> count(ozone)
+```
+
+Teraz zbuduj i przetestuj model regresji logistycznej. Następnie oceń
+jakość. Zastanów się, które zmienne uwzględnić w modelu, a które nie.
+Podczas dzielenia zestawu danych zastosuj równomierny podział danych
+(argument `strata = ozone`).
+
+-   Czy zmienne `date, wd, pm10, pm25, so2, co` wnoszą coś do modelu ?
+-   Zastanów się jakie role przypisać no2 i nox, ponieważ te dwa
+    predyktory są z sobą mocno skorelowane.
+-   Czy stosować przekształcenia boxCox lub YeoJohnson ?
+-   Czy normalizacja jest potrzebna ?
+-   Czy wyizolować z `date` podgrupy, które będą bardziej celne.
+
+::: callout-note
+Zastosuj: `set.seed(222)` do podziału danych na zbiory treningowe i
+testowe.
+:::
+
+## Rozwiązanie
+
+```{r}
+# rsample
+
+set.seed(222)
+air_split <- initial_split(data = air, prop = 3/4, strata = ozone)
+
+train_air <- training(air_split)
+test_air <- testing(air_split)
+
+# sprawdzamy starta (około 23% wysokie i 77% niskie)
+
+train_air |> count(ozone)
+test_air |> count(ozone)
+
+### recipe 
+
+# Uwaga - zmienne wd, pm10, pm25, so2, co - raczej nic nie wnoszą do modelu
+# Uwaga - nox i no2 są mocno skorelowane, więc potrzebna dekorelacja - lub 
+# nalezy wybrać jedną zmienną. Dekorelacja to zastosowanie PCA, ale to nie dało efektu żadnego. Przed PCA trzeba zastosować przekształcenie i normalizację - ale PCA nic nie dało. 
+# Gdy stosujemy nox i no2 jednocześnie jako predyktory, to może pomóc transofrmacja zmiennych. 
+
+air_rec <- 
+  recipe(ozone ~ ., data = train_air) |> 
+  update_role(o3, wd, date, pm10, pm25, so2, co, no2, new_role = "ID") |> 
+  step_BoxCox(ws, nox, no2) |>  # daje ten sam efet co metoda Yeo-Johnson
+  # step_normalize(ws, nox, no2) |> # nie pomaga 
+  step_date(date, features = c("month")) |> 
+  step_time(date, features = c("hour")) |>
+  step_mutate(date_hour = as.factor(date_hour)) |>  
+  step_dummy(all_nominal_predictors()) |> 
+  step_zv()
+
+air_rec |> prep() |> bake(train_air)
+
+### parsnip
+
+air_mod <- 
+  logistic_reg() |> 
+  set_engine("glm")
+
+### workflow
+
+air_work <- 
+  workflow() |> 
+  add_model(air_mod) |> 
+  add_recipe(air_rec)
+
+### fit
+
+air_fit <-  
+  air_work |> 
+  fit(data = train_air)
+
+air_fit |> tidy() |> print(n = 23)
+
+### Predict and evaluation
+
+air_fit |> 
+  predict(new_data = test_air)
+
+air_pred <- 
+  air_fit |> 
+  augment(new_data = test_air)
+
+air_pred |> select(-o3, -date, -pm10, -pm25, -so2, -nox, -co)
+
+air_pred |> 
+  roc_curve(truth = ozone, .pred_Niskie) |> 
+  autoplot()
+
+air_pred |> 
+  roc_auc(truth = ozone, .pred_Niskie)
+```

@@ -1,0 +1,43 @@
+%%{init: {'theme':'dark'}}%%
+flowchart TD
+    subgraph Workflow[Workflow]
+    RECIPE --> |"add_recipe(x, recipe)"| WORKFLOW
+    MODEL  --> |"add_model(x, spec)"| WORKFLOW 
+    end
+    
+    subgraph Data["Data spliting"]
+    A[Data] -->|"initial_split(data, prop, strata)"| B(split_data)
+    B --> |"testing(x)"| C[test_data]
+    B --> |"trainning(x)"| D[train_data]
+    V[validation_data]
+    end
+    
+    subgraph Tune[hyperparameter tuning]
+    grid_parameters --> |"tune_grid(grid)"| fit
+    V --> |"tune_grid(resamples)"| fit
+    metrics --> |"tune_grid(metrics)"| fit
+    
+    best_parameters
+    end
+
+    subgraph BEST[Best model]
+    final_model
+    final_fit
+    end
+    
+    D --> |"recipe(formula, data)"| RECIPE
+    D --> |"validation_set(data, prop, strata)"| V[validation_data]
+    
+        
+    
+    WORKFLOW -->|"finalize_workflow(x)"| final_model
+    
+    best_parameters --> |"finalize_workflow(parameters)"| final_model
+
+    WORKFLOW --> |"tune_grid(object)"| fit
+    
+    fit --> |"select_best(x)"| best_parameters
+
+    B --> |"last_fit(split)"| final_fit 
+    final_model --> |"last_fit(object)"| final_fit
+

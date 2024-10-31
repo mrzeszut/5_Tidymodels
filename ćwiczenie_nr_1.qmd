@@ -1,0 +1,130 @@
+---
+title: "Ćwiczenie [1]"
+author: "Mateusz Rzeszutek"
+format: 
+  html:
+    self-contained: true
+    toc: true
+    toc-depth: 4
+    toc-location: right
+    toc-title: "Spis treści"
+    number-sections: true
+    number-depth: 4
+    code-fold: show
+    code-summary: "Show the code"
+    code-tools: true
+    code-block-bg: true
+    code-block-border-left: "black"
+    code-line-numbers: false
+    code-copy: true
+    smooth-scroll: true
+    anchor-sections: true
+    link-external-icon: true
+    link-external-newwindow: true
+    theme:
+        light: cosmo
+        dark: darkly
+    fontsize: 1.0em
+    linestretch: 1.5
+editor: 
+  markdown: 
+    wrap: 72
+execute:
+  warning: false
+  echo: true
+  error: false
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+library(tidymodels)
+library(dotwhisker)
+```
+
+## Dane
+
+```{r}
+colnames(airquality) <- tolower(colnames(airquality))
+
+air <-
+  airquality |>
+  as_tibble() |>
+  na.omit() |> 
+  select(-day) |> 
+  mutate(month = factor(month)) 
+```
+
+## Podgląd danych
+
+```{r}
+air |>
+  group_by(month) |> 
+  count()
+```
+
+Mała liczba obserwacji w czerwcu. Wyniki moga być wątpliwe.
+
+```{r}
+library(GGally)
+library(ggpubr)
+
+ggpairs(air)
+```
+
+Wysoka korelacja ozone vs temp.
+
+```{r}
+air |> 
+  ggplot(aes(x = ozone, y = temp)) +
+  geom_point() + 
+  geom_smooth(method = "lm") + 
+  stat_regline_equation() +
+  facet_wrap(~month) 
+```
+
+Mają różne linie nachylenia, ale nie uwzględniamy wszystkich zmiennych.
+Niektóre miesiące mają bardzo podobne nachylenie.
+
+## Estymacja
+
+```{r}
+# Estymacja modelu regresji liniowej przy zastosowaiu metody najmniejszych kwadratów
+
+lm_mod <- 
+  linear_reg() |> 
+  set_engine(engine = "lm") |> 
+  fit(ozone ~ solar.r + solar.r:temp + wind:temp, data = air)
+
+# Wydruk parametrów modelu  
+
+lm_mod$fit |> summary()
+lm_mod |> tidy(conf.int = T)
+
+# Wykres parametrów modelu 
+
+lm_mod |> 
+  dwplot(vline = geom_vline(xintercept = 0, color = "grey50", linetype = 2), 
+         dot_args = list(color = "black", size = 2), 
+         whisker_args = list(color = "black"))
+```
+
+## Nowe dane i prognoza
+
+```{r}
+new_air <- expand.grid(solar.r = mean(air$solar.r), 
+                       wind = mean(air$wind), 
+                       temp = mean(air$temp), month = factor(5:9))
+pred_air <- 
+  new_air |>
+  bind_cols(predict(lm_mod, new_air)) |> 
+  bind_cols(predict(lm_mod, new_air, type = "conf_int"))
+```
+
+```{r}
+pred_air |> 
+  ggplot(aes(x = month, y = .pred)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = .pred_lower, ymax = .pred_upper)) +
+  theme_bw()
+```

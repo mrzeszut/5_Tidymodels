@@ -1,0 +1,516 @@
+---
+title: "Ćwiczenie [6]"
+author: "Mateusz Rzeszutek"
+format: 
+  html:
+    self-contained: true
+    toc: true
+    toc-depth: 4
+    toc-location: right
+    toc-title: "Spis treści"
+    number-sections: true
+    number-depth: 4
+    code-fold: show
+    code-summary: "Show the code"
+    code-tools: true
+    code-block-bg: true
+    code-block-border-left: "black"
+    code-line-numbers: false
+    code-copy: true
+    smooth-scroll: true
+    anchor-sections: true
+    link-external-icon: true
+    link-external-newwindow: true
+    theme:
+        light: cosmo
+        dark: darkly
+    fontsize: 1.0em
+    linestretch: 1.5
+editor: 
+  markdown: 
+    wrap: 72
+execute:
+  warning: false
+  echo: true
+  error: false
+editor_options: 
+  chunk_output_type: console
+---
+
+## Pakiety
+
+```{r}
+#| output: false
+
+pkg = c(
+  "tidymodels", "glmnet","ranger","rpart",
+  "readr", "tidymodels", "vip", "ggthemes",
+  "openair", "gt", "DT", "ggdark"
+)
+
+pkg |> 
+  purrr::map(.f = ~ require(.x, character.only = T)) ; rm(pkg)
+
+tidymodels_prefer()
+```
+
+## Dane
+
+### Import danych
+
+```{r}
+# Wybierz lokalizacje na podstawie danych w tabeli i wczytaj dowolny zestaw danych:
+
+importMeta(source = "aurn") |> DT::datatable()
+
+dane <- importAURN(site = "kc1", year = 2021)
+
+dane |> glimpse()
+
+dane <- dane |> 
+  select(o3, nox, no2, no, ws, wd, air_temp, date) |> 
+  na.omit()
+```
+
+### Funkcja wd_factor
+
+Funkcja `source()` wczytuje plik zawierający kod funkcji `wd_factor()`,
+która konwertuje stopnie na 16 kierunków wiatru.
+
+```{r}
+source(file = "function_wd_factor.R") 
+
+dane <- dane |> wd_factor(wd = wd) ; dane
+```
+
+### Przyjrzyjmy się danym
+
+```{r}
+# przyjrzy się danym 
+skimr::skim(dane)
+```
+
+NOx, NO i NO2 są z sobą mocno skorelowane. Wykonywaliśmy podobne
+analizy. Redukcja wymiarów, lub wybór jednego parametru. Usuniemy no2 i
+no.
+
+```{r}
+dane |> select(-wd, -wd_cardinal, -no2, -no) |> 
+  GGally::ggpairs()
+```
+
+## Podział danych
+
+```{r}
+set.seed(123)
+splits <- initial_split(dane, prop = 3/4, strata = "o3")
+
+d_other <- training(splits)
+d_test <- testing(splits)
+
+# zbiór walidacyjny 
+set.seed(123)
+d_valid <- validation_split(data = d_other, prop = 3/4, strata = "o3")
+```
+
+## Modele
+
+```{r}
+gl_mod <-
+  linear_reg(
+    penalty = tune(), 
+    mixture = tune()
+             ) |>
+  set_engine(engine = "glmnet") |>
+  set_mode(mode = "regression")
+
+dt_mod <-
+  decision_tree(
+    cost_complexity = tune(),
+    tree_depth = tune(),
+    min_n = tune()
+  ) |>
+  set_engine(engine = "rpart") |> 
+  set_mode(mode = "regression")
+
+rf_mod <-
+  rand_forest(mtry = tune(),
+              trees = tune(),
+              min_n = tune()) |>
+  set_engine(engine = "ranger", 
+             num.threads = parallel::detectCores() - 2) |>
+  set_mode(mode = "regression")
+```
+
+## Receptury
+
+```{r}
+gl_rec <- 
+  recipe(o3 ~ ., d_other) |> 
+  update_role(date, wd, no, no2, new_role = "ID") |> 
+  step_date(date, features = "month") |> 
+  step_time(date, features = "hour") |> 
+  step_mutate(date_hour = as.factor(date_hour)) |> 
+  step_dummy(all_nominal_predictors()) |> 
+  step_zv(all_predictors()) |> 
+  step_center(all_numeric_predictors()) |> 
+  step_scale(all_numeric_predictors()) 
+
+# Każdy krok sprawdzaj w ten sposób, by upewnić się że robi to co chcesz  
+gl_rec |> prep() |> bake(new_data = d_other) 
+
+dt_rec <- 
+  recipe(o3 ~ ., d_other) |> 
+  update_role(date, wd, no, no2,  new_role = "ID") |> 
+  step_date(date, features = "month") |> 
+  step_time(date, features = "hour") |> 
+  step_mutate(date_hour = as.factor(date_hour))
+
+dt_rec |> prep() |> bake(new_data = d_other)
+
+rf_rec <- dt_rec # te same wymagania 
+```
+
+## workflow
+
+```{r}
+gl_work <- 
+  workflow() |> 
+  add_model(gl_mod) |> 
+  add_recipe(gl_rec)
+
+dt_work <- 
+  workflow() |> 
+  add_model(dt_mod) |> 
+  add_recipe(dt_rec)
+
+rf_work <- 
+  workflow() |> 
+  add_model(rf_mod) |> 
+  add_recipe(rf_rec)
+```
+
+## Grid and tune
+
+::: panel-tabset
+## Glmnet
+
+Podejście nr 1.
+
+```{r}
+set.seed(123)
+gl_grid <- crossing(grid_regular(penalty(), 
+                                 levels = 25),
+                    mixture = seq(0, 1, 0.25))
+
+set.seed(123)
+gl_res <- 
+  gl_work |> 
+  tune_grid(resamples = d_valid,
+            grid = gl_grid,
+            control = control_grid(save_pred = T), 
+            metrics = metric_set(rsq))
+
+gl_res |>
+  collect_metrics() |>
+  mutate(mixture = as.factor(mixture)) |> 
+  ggplot(aes(penalty, mean, color = mixture, group = mixture)) +
+  geom_point(size = 2) +
+  geom_line(linetype = 2) +
+  ylab("rsq") +
+  scale_x_log10() +
+  ggdark::dark_theme_dark()
+
+gl_res |> show_best(n = 10) # zbyt małę różncie by się sygerować. 
+```
+
+Podejście nr 2
+
+```{r}
+gl_grid <- crossing(penalty = seq(1, 0.005, length.out = 300), 
+                    mixture = seq(0, 1, 0.25))
+
+set.seed(123)
+gl_res <- 
+  gl_work |> 
+  tune_grid(resamples = d_valid,
+            grid = gl_grid,
+            control = control_grid(save_pred = T), 
+            metrics = metric_set(rsq))
+
+gl_res |>
+  collect_metrics() |>
+  mutate(mixture = as.factor(mixture)) |> 
+  ggplot(aes(penalty, mean, color = mixture, group = mixture)) +
+  geom_point(size = 2) +
+  geom_line(linetype = 2) +
+  ylab("rsq") +
+  scale_x_log10() +
+  ggdark::dark_theme_dark()
+
+gl_res |> show_best(n = 10) # zbyt małę różncie by się sygerować. 
+
+gl_res |> 
+  collect_metrics() |> 
+  filter(mixture == 0.25) |> 
+  arrange(penalty) |> 
+  DT::datatable()
+```
+
+## Decision tree
+
+Podejście nr 1
+
+```{r}
+dt_grid <- crossing(grid_regular(cost_complexity(), tree_depth(), levels = 10),
+                    min_n = seq(5,40,5))
+
+set.seed(123)
+dt_res <- 
+  dt_work |> 
+  tune_grid(resamples = d_valid,
+            grid = dt_grid,
+            control = control_grid(save_pred = T), 
+            metrics = metric_set(rsq))
+
+dt_res |>
+  collect_metrics() |>
+  mutate(tree_depth = as.factor(tree_depth)) |>
+  mutate(min_n = as.factor(min_n)) |> 
+  ggplot(aes(cost_complexity, mean, color = min_n, group = min_n)) +
+  geom_point(size = 2) +
+  geom_line(linetype = 2) +
+  ylab("rsq") +
+  scale_x_log10() +
+  facet_wrap(~tree_depth) +
+  ggdark::dark_theme_dark()
+
+dt_res |> show_best(n = 40)
+dt_grid |> count(cost_complexity)
+```
+
+Podejście nr 2
+
+```{r}
+dt_grid <- crossing(cost_complexity = seq(0.001, 0.00001, length.out = 30), 
+                    tree_depth = 11:14, 
+                    min_n = seq(30, 34, 2))
+set.seed(123)
+dt_res <- 
+  dt_work |> 
+  tune_grid(resamples = d_valid,
+            grid = dt_grid,
+            control = control_grid(save_pred = T), 
+            metrics = metric_set(rsq))
+
+dt_res |>
+  collect_metrics() |>
+  mutate(tree_depth = as.factor(tree_depth)) |>
+  mutate(min_n = as.factor(min_n)) |> 
+  ggplot(aes(cost_complexity, mean, color = min_n, group = min_n)) +
+  geom_point(size = 2) +
+  geom_line(linetype = 2) +
+  ylab("rsq") +
+  scale_x_log10() +
+  facet_wrap(~tree_depth) +
+  ggdark::dark_theme_dark()
+
+dt_res |> show_best(n = 10)
+```
+
+## Random forest
+
+Podejście nr 1
+
+```{r}
+set.seed(123)
+rf_rec # predictor = 4 + 2  
+
+rf_grid <-  crossing(mtry = 2:6, 
+                     trees = seq(20, 2000, 40), 
+                     min_n = seq(10, 100, 20))
+
+set.seed(123)
+rf_res <- 
+  rf_work |> 
+  tune_grid(resamples = d_valid,
+            grid = rf_grid,
+            control = control_grid(save_pred = T), 
+            metrics = metric_set(rsq))
+
+rf_res |>
+  collect_metrics() |>
+  mutate(mtry = as.factor(mtry)) |>
+  mutate(min_n = as.factor(min_n)) |> 
+  ggplot(aes(trees, mean, color = min_n, group = min_n)) +
+  geom_point(size = 2) +
+  geom_line(linetype = 2) +
+  ylab("rsq") +
+  scale_x_log10() +
+  facet_wrap(~mtry) +
+  ggdark::dark_theme_dark()
+
+rf_res |> show_best(n = 10)
+```
+
+Podejście nr 2
+
+```{r}
+set.seed(123)
+rf_rec # predictor = 4 + 2  
+
+rf_grid <-  crossing(mtry = 2:3, 
+                     trees = seq(10, 500, 10), 
+                     min_n = 10)
+
+set.seed(123)
+rf_res <- 
+  rf_work |> 
+  tune_grid(resamples = d_valid,
+            grid = rf_grid,
+            control = control_grid(save_pred = T), 
+            metrics = metric_set(rsq))
+
+
+rf_res |>
+  collect_metrics() |>
+  mutate(mtry = as.factor(mtry)) |>
+  ggplot(aes(trees, mean, color = mtry, group = mtry)) +
+  geom_point(size = 2) +
+  geom_line(linetype = 2) +
+  ylab("rsq") +
+  scale_x_log10() +
+  ggdark::dark_theme_dark()
+
+rf_res |> show_best(n = 10)
+```
+
+## Parametry
+
+**glmnet:**
+
+-   mixture = 0.25
+
+-   penalty = 0.195
+
+**decision_tee:**
+
+cost_complexity = 0.000112,
+
+tree_depth = 11,
+
+min_n = 32
+
+**random_forest:**
+
+mtry = 3
+
+trees = 180
+
+min_n = 10
+:::
+
+## Last fit
+
+```{r}
+last_gl_mod <-
+  linear_reg(penalty = 0.0195, mixture = 0.25) |>
+  set_engine(engine = "glmnet") |>
+  set_mode(mode = "regression")
+
+last_gl_work <- 
+  gl_work |> 
+  update_model(last_gl_mod)
+
+set.seed(123)
+last_gl_fit <- 
+  last_gl_work |> 
+  last_fit(split = splits)
+
+
+last_dt_mod <-
+  decision_tree(cost_complexity = 0.000112,
+                tree_depth = 11,
+                min_n = 32) |>
+  set_engine(engine = "rpart") |> 
+  set_mode(mode = "regression")
+
+last_dt_work <- 
+  dt_work |> 
+  update_model(last_dt_mod)
+
+set.seed(123)
+last_dt_fit <- 
+  last_dt_work |> 
+  last_fit(split = splits)
+
+last_rf_mod <-
+  rand_forest(mtry = 2,
+              trees = 180,
+              min_n = 10) |>
+  set_engine(engine = "ranger", 
+             num.threads = parallel::detectCores() - 2,   # równoległe
+             importance = "impurity") |>                  # do pakietu vip
+  set_mode(mode = "regression")
+
+last_rf_work <- 
+  rf_work |> 
+  update_model(last_rf_mod)
+
+set.seed(123)
+last_rf_fit <- 
+  last_rf_work |> 
+  last_fit(split = splits)
+```
+
+## Evaluations models
+
+```{r}
+out <- list(last_gl_fit,
+            last_dt_fit,
+            last_rf_fit)
+
+nazwy <- c("gl", "dt", "rf")
+names(out) <- nazwy
+
+nazwy |> 
+  purrr::map_dfr(~collect_metrics(out[[.x]]) |> 
+                   mutate(mod = .x)) |> 
+  mutate_if(is.numeric, round, digits = 2) |> 
+  arrange(.metric) |> 
+  gt()
+```
+
+Wykres rozrzutu + ine metryki
+
+```{r}
+prognoza <- 
+nazwy |> 
+  purrr::map_dfr(~collect_predictions(out[[.x]]) |> 
+                   mutate(mod = .x))
+
+prognoza |> 
+  ggplot(aes(o3, .pred)) + 
+  geom_abline(slope = c(0.5, 1, 2), color = "black") +
+  geom_point() +
+  facet_wrap(~mod) +
+  ggdark::dark_theme_dark() +
+  coord_equal()
+
+prognoza |> openair::modStats(mod = ".pred", obs = "o3", type = "mod") |> 
+  mutate_if(is.numeric, round, digits = 2) |> 
+  arrange(mod) |> 
+  gt()
+```
+
+Model
+
+```{r}
+last_rf_fit |> extract_fit_parsnip()
+
+last_rf_fit |> 
+  extract_fit_parsnip() |> 
+  vip() +
+  scale_x_discrete(expand = c(0,0)) +
+  scale_y_continuous(expand = c(0,0))
+```

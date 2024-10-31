@@ -1,0 +1,250 @@
+---
+title: "Ćwiczenie [2]"
+author: "Mateusz Rzeszutek"
+format: 
+  html:
+    self-contained: true
+    toc: true
+    toc-depth: 4
+    toc-location: right
+    toc-title: "Spis treści"
+    number-sections: true
+    number-depth: 4
+    code-fold: show
+    code-summary: "Show the code"
+    code-tools: true
+    code-block-bg: true
+    code-block-border-left: "black"
+    code-line-numbers: false
+    code-copy: true
+    smooth-scroll: true
+    anchor-sections: true
+    link-external-icon: true
+    link-external-newwindow: true
+    theme:
+        light: cosmo
+        dark: darkly
+    fontsize: 1.0em
+    linestretch: 1.5
+editor: 
+  markdown: 
+    wrap: 72
+execute:
+  warning: false
+  echo: true
+  error: false
+editor_options: 
+  chunk_output_type: console
+---
+
+## Ćwiczenie \[2\]
+
+## Pakiety
+
+```{r}
+library(tidymodels)
+library(openair)
+library(skimr)
+tidymodels_prefer()
+```
+
+## Przygotowanie danych
+
+```{r}
+air <- mydata |> selectByDate(year = 2002)
+air |> skim()
+
+air <- air |> na.omit()
+
+air <- air |> 
+  mutate(ozone = cut(o3, 
+                     breaks = c(-0.1, 10, 53), 
+                     labels = c("Niskie", "Wysokie")
+                     )
+         )
+```
+
+## Podział danych
+
+```{r}
+set.seed(222)
+air_split <- initial_split(data = air, prop = 3/4, strata = ozone)
+
+train_air <- training(air_split)
+test_air <- testing(air_split)
+
+air_folds_cv_1 <- vfold_cv(train_air)
+air_folds_cv_5 <- vfold_cv(train_air, v = 10, repeats = 5)
+air_folds_boot <- bootstraps(train_air, times = 5)
+```
+
+## Recipe i model
+
+```{r}
+# recipe
+
+air_rec <- 
+  recipe(ozone ~ ., data = train_air) |> 
+  update_role(o3, wd, date, pm10, pm25, so2, co, no2, new_role = "ID") |> 
+  step_BoxCox(ws, nox, no2) |>  # daje ten sam efet co metoda Yeo-Johnson
+  # step_normalize(ws, nox, no2) |> # nie pomaga 
+  step_date(date, features = c("month")) |> 
+  step_time(date, features = c("hour")) |>
+  step_mutate(date_hour = as.factor(date_hour)) |>  
+  step_dummy(all_nominal_predictors()) |> 
+  step_zv()
+
+
+air_rec |> prep() |> bake(train_air)
+
+# Models
+
+air_mod_log <- 
+  logistic_reg() |> 
+  set_engine("glm")
+
+air_mod_rf <- 
+  rand_forest() |> 
+  set_engine("ranger") |> 
+  set_mode("classification")
+
+# workflow 
+
+air_work_log <- 
+  workflow() |> 
+  add_model(air_mod_log) |> 
+  add_recipe(air_rec)
+
+air_work_rf <- 
+  workflow() |> 
+  add_model(air_mod_rf) |> 
+  add_recipe(air_rec)
+
+# Tune 4 example
+
+## reg logi
+
+log_zero <- air_work_log |> fit(train_air)
+log_cv_1 <- air_work_log |> fit_resamples(air_folds_cv_1)
+log_cv_5 <- air_work_log |> fit_resamples(air_folds_cv_5)
+log_boot <- air_work_log |> fit_resamples(air_folds_boot)
+
+## random forest
+
+rf_zero <- air_work_rf |> fit(train_air)
+rf_cv_1 <- air_work_rf |> fit_resamples(air_folds_cv_1)
+rf_cv_5 <- air_work_rf |> fit_resamples(air_folds_cv_5)
+rf_boot <- air_work_rf |> fit_resamples(air_folds_boot)
+```
+
+## Statystyki dla log
+
+```{r}
+# Prognoza zestaw uczącyc
+pred_train <-
+  log_zero |>
+  augment(new_data = train_air) |>
+  select(-pm10, -pm25, -o3, -wd, -no2, -co)
+
+# Prognoza zestaw testowy 
+pred_test <-
+  log_zero |>
+  augment(new_data = test_air) |>
+  select(-pm10, -pm25, -o3, -wd, -no2, -co)
+
+# podsumowanie wyników
+
+logi_stat <-
+  bind_rows(
+    # zestaw uczący skuteczność
+    bind_rows(
+      pred_train |> accuracy(truth = ozone, .pred_class),
+      pred_train |> roc_auc(ozone, .pred_Niskie)
+    ) |>
+      mutate(type = "train") |>
+      rename(mean = .estimate),
+    # zestaw treningowy skuteczność
+    bind_rows(
+      pred_test |> accuracy(truth = ozone, .pred_class),
+      pred_test |> roc_auc(ozone, .pred_Niskie)
+    ) |>
+      mutate(type = "test") |>
+      rename(mean = .estimate),
+    
+    # Zestawy próbkowania
+    log_cv_1 |> collect_metrics() |> _[, 1:3] |> mutate(type = "CV 10"),
+    log_cv_5 |> collect_metrics() |> _[, 1:3] |> mutate(type = "cv 10 - R"),
+    log_boot |> collect_metrics() |> _[, 1:3] |> mutate(type = "boot")
+  )
+```
+
+## Statystyki dla rf
+
+```{r}
+# Prognoza zestaw uczącyc
+
+pred_train <-
+  rf_zero |>
+  augment(new_data = train_air) |>
+  select(-pm10, -pm25, -o3, -wd, -no2, -co)
+
+# Prognoza zestaw testowy 
+pred_test <-
+  rf_zero |>
+  augment(new_data = test_air) |>
+  select(-pm10, -pm25, -o3, -wd, -no2, -co)
+
+# podsumowanie wyników
+rf_stat <-
+  bind_rows(
+    # uczący
+    bind_rows(
+      pred_train |> accuracy(truth = ozone, .pred_class),
+      pred_train |> roc_auc(ozone, .pred_Niskie)
+    ) |>
+      mutate(type = "train") |>
+      rename(mean = .estimate),
+    # treningowy
+    # testowy
+    bind_rows(
+      pred_test |> accuracy(truth = ozone, .pred_class),
+      pred_test |> roc_auc(ozone, .pred_Niskie)
+    ) |>
+      mutate(type = "test") |>
+      rename(mean = .estimate),
+    # testowy
+    # próbkowanie
+    rf_cv_1 |> collect_metrics() |> _[, 1:3] |> mutate(type = "CV 10"),
+    rf_cv_5 |> collect_metrics() |> _[, 1:3] |> mutate(type = "cv 10 - R"),
+    rf_boot |> collect_metrics() |> _[, 1:3] |> mutate(type = "boot")
+  )
+```
+
+## Podsumowanie wyników
+
+Zastosujemy pakiet `gt` [@gt] do prezentacji wyników:
+
+```{r}
+library(gt)
+
+left_join(logi_stat |> 
+            rename(logistic_reg = mean) |> 
+            select(-.estimator),
+          rf_stat |> 
+            rename(rand_forest = mean)|> 
+            select(-.estimator),
+          by = c(".metric", "type")) |> 
+  select(type, .metric, logistic_reg, rand_forest) |> 
+  arrange(.metric, type) |> 
+  mutate_if(is.numeric, ~round(., digits = 2)) |> 
+  gt() |> 
+  tab_header(
+    title = md("**Podsumowanie wyników oceny skutecznosci**"), 
+    subtitle = md("*klasyfikacja logistyczna vs. las losowy*"))
+```
+
+Wnioski nie każda metoda estymacji wymaga stosowania metody ponownego
+próbkowania. W przypadku prostej metody regresji logistycznej uzyskano
+podobne efekty. W przypadku metody lasu losowego efekty są wyraźne.
+Wyniki oceny dla zbioru treningowego wskazują na nadmierne dopasowanie w
+porównaniu do testowego.

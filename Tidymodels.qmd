@@ -1,0 +1,1963 @@
+---
+title: "Tidymodels"
+subtitle: "Wprowadzenie do uczenia maszynowego w R[Tidymodels]"
+author: "Mateusz Rzeszutek"
+abstract-title: "Streszczenie"
+abstract: "Krótki kurs, który ma na celu wprowadzenie cię do świata uczenia maszynowego przy zastosowaniu nowoczesnych i efektywnych narzędzi programowania *Tidymodels*"
+format: 
+  html:
+    self-contained: true
+    toc: true
+    toc-depth: 4
+    toc-location: right
+    toc-title: "Spis treści"
+    number-sections: true
+    number-depth: 4
+    code-fold: show
+    code-summary: "Show the code"
+    code-tools: true
+    code-block-bg: true
+    code-block-border-left: "black"
+    code-line-numbers: false
+    code-copy: true
+    html-math-method: katex
+    smooth-scroll: true
+    anchor-sections: true
+    link-external-icon: true
+    link-external-newwindow: true
+    theme:
+        light: cosmo
+        dark: darkly
+    fontsize: 1.0em
+    linestretch: 1.5
+execute:
+  warning: false
+  echo: true
+  error: false
+editor_options: 
+  chunk_output_type: console
+bibliography: references.bib
+---
+
+<div style="text-align: justify">
+
+**Najważniejsze materiały uzupełniające:**
+
+Grunt to solidne podstawy, które zapewnią komplementarną wiedzę i umiejętności na temat usystematyzowanego procesu uczenia maszynowego.
+
+-   [Get Startet](https://www.tidymodels.org/start/)
+-   [Tidy Modeling with R](https://www.tidymodels.org/books/tmwr/)
+-   [Przykłady i rozwiązania](https://www.tidymodels.org/learn/)
+-   [Ważnen](https://www.tmwr.org/pre-proc-table)
+
+Często pojawiają się różne problemy. Nie wiemy jak je rozwiązać lub nie mamy pomysłu, który byłby wydajny i efekty. Warto wtedy skorzystać z doświadczenia społeczności, która obejmuje miliony ludiz na całym świecie. *Kto pyta nie błądzi*.
+
+-   Help [Posit](https://community.rstudio.com/c/ml/15) ; [Stack](https://stackoverflow.com/questions/tagged/tidymodels)
+
+**Chcesz być na bieżąco, to zaglądaj tutaj raz w tygodniu:** [news](https://www.tidyverse.org/tags/tidymodels/)
+
+**Literatura dodatkowa:**
+
+-   [blog Julia Silge](https://juliasilge.com/blog/)
+-   [Statistical Inference via Data Science](https://www.tidymodels.org/books/moderndive/) [@ismay2019a]
+-   [Feature Engineering & Selection](https://www.tidymodels.org/books/fes/) [@kuhn2019a]
+
+**Po kursie** - niezwykle cenna książka [Explanatory Model Analysis](https://ema.drwhy.ai/) [@biecek2021a]
+
+**Najważniejsze Pakiety:**
+
+-   [tidimodels](https://tidymodels.tidymodels.org/) - tidymodels to **meta pakiet**, który instaluje i ładuje wymienione poniżej podstawowe pakiety potrzebne do modelowania i uczenia maszynowego.
+-   [rsample](https://rsample.tidymodels.org/) - zapewnia infrastrukturę do wydajnego dzielenia danych i próbkowania
+-   [parsnip](https://parsnip.tidymodels.org/) - to przejrzysty, ujednolicony interfejs do modeli, którego można używać do wypróbowywania szeregu modeli bez zagłębiania się w szczegóły składniowe podstawowych pakietów.
+-   [recipes](https://recipes.tidymodels.org/) - o przejrzysty interfejs do narzędzi do wstępnego przetwarzania danych na potrzeby inżynierii funkcji.
+-   [workflows](https://workflows.tidymodels.org/) - przepływy pracy łączą przetwarzanie wstępne, modelowanie i przetwarzanie końcowe.
+-   [tune](https://tune.tidymodels.org/) - tune pomaga zoptymalizować **hiper-parametry** modelu i etapy wstępnego przetwarzania.
+-   [yardstick](https://yardstick.tidymodels.org/) - mierzy skuteczność modeli przy użyciu wskaźników wydajności.
+-   [broom](https://broom.tidymodels.org/) - broom konwertuje informacje zawarte w typowych obiektach statystycznych R na przyjazne dla użytkownika, przewidywalne formaty.
+-   [dials](https://dials.tidymodels.org/) - dials tworzy i zarządza parametrami strojenia oraz siatkami parametrów
+
+Pod każdym linkiem znajduje się dokumentacja pakietu oraz samouczki, które wyjaśniają ideę odpowiedniego zestawu funkcji R.
+
+Poniższy diagram ilustruje przepływ pracy w **tidymodels**. Zawiera on wiele uproszczeń, ale będziemy często do niego wracać. Powyższy diagram można modyfikować i udoskonalać za pośrednictwem [mermaid](http://mermaid.js.org/syntax/flowchart.html). Kliknij ikonę pod rysunkiem, aby przejść do interaktywnego edytora.
+
+[![](https://mermaid.ink/img/pako:eNp1VG1v2jAQ_iuWJQST6B_Ih0mjodK0VkwtGtISFJn4Al4TO3KctR3lv-9sJ5AX4IOx7567e87PxUeaKg40oJPJUUhhAnKcmgMUMA2mnOnX6ek0mcQyy9VbemDakHUYS4K_qt7tNSsPZKP0q3VH7WbrAc_L--8_l-Tu7iv5jCnjPNGQihJm73Pid19i-kk2q-cfD4-rjQ96WoXLR9INKpBebmOqEtJeBPEhILnfDHiFzLAopvYPY3NhhNzHtCH3LbL2rS2EdWzjguWJg804euak1KrEokbjyZVdzJw74c7gsixaogYqm3727pD3kT074HYI1ExIeYGGkbN0sb-ivywXaBCqZ7_V57qWEB0-StAl06wAA5qY2tZoAvda8OTsq85UMC6xvpldHJtMmIbDGKShYkWZQ9VHYk4t0itJG0cf7dedvZ0LoU57g9YWy5d1tEA0cVPQ9JMJiVo5S9dwLjK4qLDl1oxfpnRR56gwb5X1kzpAd0So4OZQ3BLLr5edX8-T68fO8Rb_IHlrvpxmKEYNXr22lug4ywUzTjcm0pdN7f5Aaq6phscWXkGOoMQSaiiPJB3Mfc7Qjxn8N9ShZbOOZB1F9VidxY4lndMCdMEExxfsaPNgL_b1immAW_uAxTSWJ8Sx2qiXD5nSwOga5rQuUS4IBcNRK2iQsbxCa8nkb6UuZ-DCKP3kn0j3Up7-A8VctDA?type=png)](https://mermaid.live/edit#pako:eNp1VG1v2jAQ_iuWJQST6B_Ih0mjodK0VkwtGtISFJn4Al4TO3KctR3lv-9sJ5AX4IOx7567e87PxUeaKg40oJPJUUhhAnKcmgMUMA2mnOnX6ek0mcQyy9VbemDakHUYS4K_qt7tNSsPZKP0q3VH7WbrAc_L--8_l-Tu7iv5jCnjPNGQihJm73Pid19i-kk2q-cfD4-rjQ96WoXLR9INKpBebmOqEtJeBPEhILnfDHiFzLAopvYPY3NhhNzHtCH3LbL2rS2EdWzjguWJg804euak1KrEokbjyZVdzJw74c7gsixaogYqm3727pD3kT074HYI1ExIeYGGkbN0sb-ivywXaBCqZ7_V57qWEB0-StAl06wAA5qY2tZoAvda8OTsq85UMC6xvpldHJtMmIbDGKShYkWZQ9VHYk4t0itJG0cf7dedvZ0LoU57g9YWy5d1tEA0cVPQ9JMJiVo5S9dwLjK4qLDl1oxfpnRR56gwb5X1kzpAd0So4OZQ3BLLr5edX8-T68fO8Rb_IHlrvpxmKEYNXr22lug4ywUzTjcm0pdN7f5Aaq6phscWXkGOoMQSaiiPJB3Mfc7Qjxn8N9ShZbOOZB1F9VidxY4lndMCdMEExxfsaPNgL_b1immAW_uAxTSWJ8Sx2qiXD5nSwOga5rQuUS4IBcNRK2iQsbxCa8nkb6UuZ-DCKP3kn0j3Up7-A8VctDA)
+
+## Konstrukcja modelu w tidymodels
+
+### Wprowadzanie
+
+------------------------------------------------------------------------
+
+Tworzenie modelu statystycznego za pomocą pakietu `tidymodels` [@tidymodels].
+
+W tym rozdziale omówimy:
+
+-   przygotowania danych do modelowania,
+
+-   estymacja modelu przy zastosowaniu silników z pakietu `parsnip` [@parsnip].
+
+Najpierw wczytamy potrzebne pakiety do wczytywania danych `readr` [@readr], konwersji danych `broom.mixed` [@broom.mixed] i szybkiej wizualizacji wykresów współczynników regresji liniowej `dotwhisker` [@dotwhisker].
+
+```{r}
+library(tidymodels)
+library(parsnip)
+
+# Helper packages
+library(readr)       # import danych
+library(broom.mixed) # konwersja 
+library(dotwhisker)  # wizualizacja
+```
+
+### Dane
+
+------------------------------------------------------------------------
+
+Wykorzystamy dane o jeżowcach [@constable1993] do zbadania, w jaki sposób trzy różne reżimy żywieniowe wpływają na wielkość jeżowców w czasie. Początkowy rozmiar jeżowców na początku eksperymentu prawdopodobnie wpływa na to, jak bardzo będą rosnąć w miarę karmienia.
+
+Na początek wczytajmy dane do R, następnie zmienimy nazwy zmiennych oraz zmodyfikujemy typy danych.
+
+```{r}
+urchins <-
+  read_csv("https://tidymodels.org/start/models/urchins.csv") %>% 
+  setNames(c("food_regime", "initial_volume", "width")) %>% 
+  mutate(food_regime = factor(food_regime, 
+                              levels = c("Initial", "Low", "High")))
+```
+
+Zobaczmy dane:
+
+```{r}
+urchins
+```
+
+Sprawdzamy braki danych
+
+```{r}
+urchins |> is.na() |> as_tibble() |> summarise_all(sum)
+```
+
+-   grupa eksperymentalnego reżimu żywieniowego(food_regime: albo Initial, Low, albo High),
+-   wielkość w mililitrach na początku doświadczenia (initial_volume), oraz
+-   szerokość szwu na końcu doświadczenia (width).
+
+Na start zobaczmy nasze dane:
+
+```{r}
+urchins %>%
+  ggplot(aes(
+    x = initial_volume,
+    y = width,
+    col = food_regime,
+    group = food_regime
+  )) +
+  geom_point() +
+  geom_smooth(method = lm, se = F) +
+  scale_color_viridis_d(option = "C", end = .9)
+```
+
+Widzimy, że jeżowce, które miały mniejszą objętość na początku eksperymentu, miały zwykle szersze szwy na końcu, ale nachylenie linii wygląda inaczej, więc efekt ten może zależeć od warunków reżimu żywieniowego.
+
+### Dopasowanie modelu
+
+------------------------------------------------------------------------
+
+Model standardowej odczynnikowej analizy wariancji (ANOVA) ma sens w przypadku tego zbioru danych, ponieważ mamy zarówno predyktor ciągły, jak i predyktor jakościowy. Ponieważ nachylenia wydają się być różne dla co najmniej dwóch reżimów karmienia, zbudujmy model, który pozwala na dwukierunkowe interakcje. Określenie formuły R z naszymi zmiennymi w ten sposób:
+
+```{r}
+#| output: false
+width ~ initial_volume * food_regime
+```
+
+pozwala naszemu modelowi regresji w zależności od początkowej objętości mieć oddzielne nachylenia i punkty przecięcia dla każdego reżimu żywieniowego.
+
+W przypadku tego rodzaju modelu dobrym podejściem początkowym jest zwykła metoda najmniejszych kwadratów. **Z tidymodels zaczynamy od określenia formy funkcyjnej modelu, który chcemy zastosować z `parsnip`** . Ponieważ istnieje wynik numeryczny, a model powinien być liniowy z nachyleniami i wyrazami wolnymi, odpowiednim typem modelu jest „regresja liniowa" . Możemy to zadeklarować za pomocą:
+
+```{r}
+linear_reg()
+```
+
+To dość rozczarowujące, ponieważ samo w sobie niewiele robi. Jednak teraz, gdy typ modelu został określony, możemy pomyśleć o **metodzie estymacji lub uczenia modelu, silniku modelu**. Wartość silnika jest często mieszanką oprogramowania, którego można użyć do dopasowania lub wyszkolenia modelu, a także metody szacowania. Domyślnie dla `linear_reg()` jest to metoda `lm` zwykłych najmniejszych kwadratów, jak widać powyżej. Zamiast tego możemy ustawić inną wartość argumentu niż domyślna, np:
+
+```{r}
+linear_reg() |> 
+  set_engine("keras")
+```
+
+Strona dokumentacji funkcji `linear_reg()` zawiera listę wszystkich możliwych silników. Zapiszemy nasz obiekt modelu przy użyciu domyślnego silnika jako `lm_mod`.
+
+::: callout-note
+Pełną listę dostępnych metod w parsnip znajdziesz [tutaj](https://www.tidymodels.org/find/parsnip/).
+:::
+
+```{r}
+lm_mod <- 
+  linear_reg() |> 
+  set_engine("lm")
+```
+
+Teraz możemy przeprowadzić estymację modelu.
+
+```{r}
+lm_fit <-  
+  lm_mod |>
+  fit(width ~ initial_volume * food_regime, data = urchins)
+lm_fit  
+```
+
+Być może nasza analiza wymaga opisu estymowanych parametrów modelu i ich właściwości statystycznych. Funkcja `summary()` dla obiektów `lm` zwraca wyniki w nieporęcznym formacie. Wiele modeli ma `tidy()` metodę, która zapewnia podsumowanie wyników w bardziej przewidywalnym i użytecznym formacie (np. ramka danych ze standardowymi nazwami kolumn):
+
+```{r}
+print(lm_fit, digits = 5)
+lm_fit$fit |> summary()
+lm_fit |> tidy()
+lm_fit |> tidy(conf.int = T)
+```
+
+Tego rodzaju dane wyjściowe można wykorzystać do wygenerowania wykresu kropek i wąsów naszych wyników regresji za pomocą pakietu **dotwisker**:
+
+```{r}
+lm_fit |> 
+  tidy() |> 
+  dwplot(vline = geom_vline(xintercept = 0, color = "grey50", linetype = 2), 
+         dot_args = list(size = 2, color = "black"), 
+         whisker_args = list(color = "black")) +
+  theme_bw()
+```
+
+**Interpretacja:** początkowy rozmiar ma bardzo mały wpływ. Czy to faktycznie jest prawda. Interakcje również. Reżimy żywieniowe mają duży wpływ.
+
+### Prognozowanie
+
+------------------------------------------------------------------------
+
+Ten dopasowany obiekt `lm_fit` ma wbudowane dane wyjściowe modelu `lm`, do których można uzyskać dostęp za pomocą `lm_fit$fit`. Korzystanie z dopasowanego obiektu modelu `parsnip` ma pewne zalety, jeśli chodzi o przewidywanie.
+
+Załóżmy, że w przypadku publikacji szczególnie interesujące byłoby sporządzenie wykresu średniej wielkości ciała jeżowców, które rozpoczęły eksperyment z początkową objętością od 5 do 45, co 5 ml. Aby utworzyć taki wykres, zaczynamy od kilku nowych przykładowych danych, dla których wykonamy prognozy, aby pokazać je na naszym wykresie:
+
+```{r}
+new_points <- expand.grid(initial_volume = seq(5,45,5), 
+                          food_regime = c("Initial", "Low", "High"))
+```
+
+```{r}
+# Prognoza średniej wartości
+mean_pred <- predict(object = lm_fit, new_data = new_points)
+
+# Prognoza przedizału ufności
+conf_pred <- predict(object = lm_fit, new_data = new_points, type = "conf_int")
+
+# Łączenie danych
+lm_pred <- 
+  new_points |> 
+  bind_cols(mean_pred) |> 
+  bind_cols(conf_pred)
+
+# WYkres danych
+
+lm_pred |>
+  ggplot(aes(x = food_regime,
+             y = .pred)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = .pred_lower,
+                    ymax = .pred_upper),
+                width = 0.2) +
+  facet_wrap(~ initial_volume) +
+  theme_bw() +
+  labs(y = "urchni size")
+```
+
+### Inne metody estymacji modelu
+
+------------------------------------------------------------------------
+
+Wszyscy w twoim zespole są zadowoleni z tej fabuły, z wyjątkiem jednej osoby, która właśnie przeczytała swoją pierwszą książkę o analizie bayesowskiej . Chcą wiedzieć, czy wyniki byłyby inne, gdyby model został oszacowany przy użyciu podejścia bayesowskiego. W takiej analizie należy zadeklarować rozkład a priori dla każdego parametru modelu, który reprezentuje możliwe wartości parametrów (przed wystawieniem na obserwowane dane). Po krótkiej dyskusji grupa zgadza się, że a priori powinny mieć kształt dzwonu, ale ponieważ nikt nie ma pojęcia, jaki powinien być zakres wartości, przyjąć podejście konserwatywne i rozszerzyć a priori za pomocą rozkładu Cauchy'ego (który jest taki sam jako rozkład t o jednym stopniu swobody).
+
+Dokumentacja pakietu `rstanarm` informuje, że funkcja `stan_glm()` może być użyta do oszacowania tego modelu oraz że argumenty funkcji, które należy określić, to `priori` i `prior_intercept`. Okazuje się, że `linear_reg()` ma metodę estymacji `stan`. Ponieważ te wcześniejsze argumenty rozkładu są specyficzne dla oprogramowania `Stan`, są przekazywane poprzez argumenty funkcji `parsnip::set_engine()`. Następnie `fit()` jest stosowane tak samo, jak metodzie estymacji `lm`:
+
+```{r}
+prior_dist <- rstanarm::student_t(df = 1)
+
+set.seed(123)
+
+# Ustawiamy metodę estymacji za pomocą parsnip
+
+bayes_mod <-
+  linear_reg() |>
+  set_engine(engine = "stan",
+             prior_intercept = prior_dist,
+             prior = prior_dist)
+
+# Estymacja modelu
+
+bayes_fit <- 
+  bayes_mod |> 
+  fit(width ~ initial_volume * food_regime, data = urchins)
+
+```
+
+Ten rodzaj analizy bayesowskiej (podobnie jak wiele modeli) wykorzystuje losowo generowane liczby w swojej procedurze dopasowywania. Możemy użyć `set.seed()`, aby upewnić się, że te same (pseudo-)losowe liczby są generowane za każdym razem, gdy uruchamiamy ten kod. Numer `123` nie jest specjalny ani powiązany z naszymi danymi; to tylko *„ziarno"* używane do wybierania liczb losowych.
+
+Zobaczmy model
+
+```{r}
+bayes_fit$fit #za mała dokąłdność
+bayes_fit |> print(digits = 4)
+bayes_fit |> tidy(conf.int = T)
+```
+
+Celem pakietów **tidymodels** jest standaryzacja interfejsów do typowych zadań (jak widać na `tidy()` powyższych wynikach). To samo dotyczy uzyskiwania prognoz; możemy użyć tego samego kodu, mimo że podstawowe pakiety używają bardzo różnej składni:
+
+```{r}
+bayes_pred <- 
+new_points |> 
+  bind_cols(predict(bayes_fit, new_data = new_points)) |> 
+  bind_cols(predict(bayes_fit, new_data = new_points, type = "conf_int"))
+```
+
+Wykres
+
+```{r}
+bayes_pred |>
+  ggplot(aes(x = food_regime,
+             y = .pred)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = .pred_lower,
+                    ymax = .pred_upper),
+                width = 0.2) +
+  facet_wrap(~ initial_volume) +
+  theme_bw() +
+  labs(y = "urchni size")
+```
+
+::: callout-note
+Pakiet pasternak może współpracować z wieloma typami modeli, metodami estymacji i argumentami. Sprawdź [www](https://parsnip.tidymodels.org/reference/index.html), aby zobaczyć, co jest dostępne.
+:::
+
+```{r}
+ggplot(urchins,
+       aes(initial_volume, width)) +      # returns a ggplot object 
+  geom_jitter() +                         # same
+  geom_smooth(method = lm, se = FALSE) +  # same                    
+  labs(x = "Volume", y = "Width")         # etc
+```
+
+### Dlaczego działa to w ten sposób
+
+------------------------------------------------------------------------
+
+Dodatkowy krok polegający na zdefiniowaniu modelu za pomocą funkcji takiej jak `linear_reg()` może wydawać się zbędny, ponieważ wywołanie `lm()` jest znacznie bardziej zwięzłe. Jednak problem ze standardowymi funkcjami modelowania polega na tym, że nie oddzielają tego, co chcesz zrobić, od wykonania. Na przykład proces wykonywania formuły musi odbywać się wielokrotnie w wywołaniach modelu, nawet jeśli formuła się nie zmienia; nie możemy odtworzyć tych obliczeń.
+
+Ponadto, używając mega pakietu **tidymodels**, możemy zrobić kilka interesujących rzeczy, stopniowo tworząc model (zamiast używać pojedynczego wywołania funkcji). Strojenie modelu z **tidymodels** wykorzystuje specyfikację modelu do zadeklarowania, które części modelu należy dostroić. Byłoby to bardzo trudne do wykonania, gdyby `linear_reg()` od razu estymowało model.
+
+### Ćwiczenie \[1\]
+
+------------------------------------------------------------------------
+
+Opracuj model prognoz `O3` na podstawie zestawu danych `airquality`. Następnie wykonaj prognozę dla dowolnego zestawu danych. sprawdzić czy miesiące mają wpływ na prognozę. Usuń braki danych. Zastanów się jak przekształcić zmienne. Nie uwzględniaj zmiennej `day` w prognozach. Nie uwzględniaj interakcji między zmiennymi. W celu podglądnięcia danych zastosuj funkcje pakietu `gggally`. Zastosuj tylko metodę najmniejszych kwadratów.
+
+Zacznij od przygotowania danych, zastanów się co tu robimy. Opisz w komentarzach poszczególne kroki korzystając z systemu pomocy R.
+
+```{r}
+colnames(airquality) <- tolower(colnames(airquality))
+
+air <-
+  airquality |>
+  as_tibble() |>
+  na.omit() |> 
+  select(-day) |> 
+  mutate(month = factor(month)) 
+```
+
+------------------------------------------------------------------------
+
+## Wstępne przetwarzanie danych
+
+### Wstęp
+
+Wiemy jak estymować modele przy zastosowaniu różnych metod dostępnych w pakiecie `parsnip` [@parsnip]. W tym artykule zajmiemy się innym pakietem tidymodels --- `recipes` [@recipes], który został zaprojektowany w celu ułatwienia wstępnego przetwarzania danych przed trenowaniem modelu.
+
+Receptury są budowane jako seria etapów wstępnego przetwarzania, takich jak:
+
+-   zamiana predyktorów jakościowych na zmienne fikcyjne,
+
+-   przekształcanie danych na inną skalę (np. logarytm zmiennej, potęgą, pierwiastek),
+
+-   przekształcanie razem całych grup predyktorów,
+
+-   wyodrębnianie kluczowych zmiennych ze zmiennych nieprzetworzonych (np. uzyskanie dnia tygodnia ze zmiennej daty),
+
+i tak dalej. Jeśli znasz interfejs formuł R, wiele z nich może brzmieć znajomo i przypominać to, co już robi formuła. Receptury można używać do robienia tych samych rzeczy, ale mają one znacznie szerszy zakres możliwości. W tym artykule pokazano, jak używać receptur do modelowania. Aby użyć kodu w tym artykule, musisz zainstalować następujące pakiety: `nycflights13` [@nycflights13], `skimr` [@skimr] i `tidymodels` [@tidymodels].
+
+```{r}
+library(skimr)
+library(nycflights13)
+library(tidymodels)
+tidymodels_prefer()
+```
+
+### Dane
+
+`nycflights13` - Dane dotyczą lotów z Nowego Jorku. Wykorzystajmy te dane do prognozowania opóźnienia samolotu. Sprawdzimy, czy samolot przyleci z opóźnieniem większym niż 30 minut. Ten zestaw danych zawiera informacje o 325819 lotach rozpoczynających się w pobliżu Nowego Jorku w 2013 roku. Zacznijmy od załadowania danych i wprowadzenia kilku zmian w zmiennych:
+
+Najpierw sprawdźć opis danych:
+
+```{r}
+#| eval: false
+
+?flights
+?weather
+```
+
+```{r}
+set.seed(123)
+flights_data <-
+  flights |>
+  mutate(
+    arr_delay = ifelse(arr_delay >= 30, "late", "on_time"),
+    arr_delay = factor(arr_delay),
+    date = lubridate::as_date(time_hour)
+  ) |>
+  inner_join(weather, by = c("origin", "time_hour")) |>
+  select(dep_time,
+         flight,
+         origin,
+         dest,
+         air_time,
+         distance,
+         carrier,
+         date,
+         arr_delay,
+         time_hour) |>
+  na.omit() |>
+  mutate_if(is.character, as.factor)
+```
+
+Sprawdźmy próbkę danych:
+
+```{r}
+flights_data |>
+  count(arr_delay)
+```
+
+```{r}
+flights_data |>
+  count(arr_delay) |>
+  mutate(prop = n/sum(n))
+```
+
+około 16 % procent lotów ma opóźnienia większe niż 30 minut. Zanim zaczniemy budować naszą recepturę, rzućmy okiem na kilka konkretnych zmiennych, które będą ważne zarówno dla wstępnego przetwarzania, jak i modelowania. Po pierwsze, zauważ, że zmienna, którą stworzyliśmy, nazwana \` jest zmienną jakościowa; ważne jest, aby nasza zmienna wynikowa do trenowania modelu regresji logistycznej była zmienną jakościową (factor, czynnik).
+
+```{r}
+flights_data |> glimpse()
+```
+
+Po drugie, są dwie zmienne, których nie chcemy używać jako predyktorów w naszym modelu, ale chcielibyśmy je zachować jako zmienne identyfikacyjne, których można użyć do rozwiązywania problemów z źle przewidywanymi punktami danych. Są to `flight`, wartość liczbowa i `time_hour`, wartość daty i godziny. Po trzecie, istnieje 104 miejsc docelowych lotów zawartych w `dest` i 16 odrębnych przewoźników `carriers`.
+
+```{r}
+flights_data |>
+  skimr::skim()
+```
+
+Ponieważ będziemy używać prostego modelu regresji logistycznej, zmienne `dest` i `carrier` zostaną przekształcone na zmienne fikcyjne. Jednak niektóre z tych wartości nie występują zbyt często, co może skomplikować naszą analizę. W dalszej części tego artykułu omówimy konkretne kroki, które możemy dodać do naszej `recipe`, aby rozwiązać ten problem przed modelowaniem.
+
+Podział danych: Aby rozpocząć, podzielmy ten pojedynczy zestaw danych na dwa:
+
+-   **Grupa ucząca** -- to taki zestaw danych, który używamy do nauki algorytmu. Na podstawie tych danych model uczy się odpowiednio klasyfikować, buduje wszelkie zależności. Można powiedzieć, że przewiduje możliwe wyniki i podejmuje decyzje na podstawie przekazanych mu danych. \[[źródło](%5Bźródło%5D(https://www.statystyczny.pl/grupa-uczaca-walidacyjna-i-testowa/).)\]
+
+-   **Grupa testowa** -- kiedy już wybraliśmy model, wybraliśmy hiper-parametry, to nadchodzi czas na przetestowanie wszystkiego danymi z grupy testowej. Jest bardzo ważne, by dane te nie były wcześniej używane do uczenia czy walidacji modelu, ponieważ chcemy wiedzieć, jak wybrany algorytm sprawdza się na danych, z którymi nigdy wcześniej nie miał do czynienia \[[źródło](%5Bźródło%5D(https://www.statystyczny.pl/grupa-uczaca-walidacyjna-i-testowa/).)\]
+
+Zachowamy większość wierszy w oryginalnym zbiorze danych (podzbiór wybrany losowo) w zbiorze uczącym. Dane uczące posłużą do dopasowania modelu, a zestaw testowy do pomiaru skuteczności modelu. W tym celu możemy wykorzystać pakiet `rsample` do stworzenia obiektu zawierającego informacje o sposobie podziału danych, a następnie jeszcze dwie funkcje `rsample` do stworzenia ramek danych dla zbioru uczącego i testowego:
+
+```{r}
+set.seed(222)
+data_split <- initial_split(data = flights_data, prop = 3/4)
+train_data <- training(data_split)
+test_data <-  testing(data_split)
+```
+
+### Utwórz recepture i role
+
+Na początek stwórzmy recepturę dla prostego model regresji logistycznej. Przed procesem estymacji modelu możemy zastosować recepturę, aby utworzyć kilka nowych predyktorw i przeprowadzić wstępne przetwarzanie wymagane przez model. Zainicjujmy nową recepturę:
+
+```{r}
+flights_rec <-
+  recipe(arr_delay ~., data = train_data)
+```
+
+Funkcja `recipe()`ma dwa argumenty:
+
+**Formuła** - Każda zmienna po lewej stronie tyldy (\~) jest uważana za **zmienną objaśnianą** (`arr_delay)`. Po prawej stronie tyldy znajdują się **predyktory**. Zmienne mogą być wymienione według nazwy lub można użyć kropki (.), aby wskazać wszystkie inne zmienne jako predyktory.
+
+**Dane** - Receptura jest powiązana ze zbiorem danych stosowanym do estymacji modelu. Zazwyczaj będzie to zestaw uczący, więc `data = train_data`. Nazywanie zestawu danych w rzeczywistości nie zmienia samych danych; służy tylko do katalogowania nazw zmiennych i ich typów, takich jak czynniki, liczby całkowite, daty itp.
+
+Teraz możemy dodać role receptury. Możemy użyć funkcji `update_role()`, aby poinformować, że `flight` i `time_hour` są są zmiennymi z niestandardową rolą, którą nazwaliśmy "ID" (rola może mieć dowolną wartość znakową). Podczas gdy nasza formuła obejmowała wszystkie zmienne w zbiorze uczącym inne niż `arr_delay` jako predyktory, to mówi recepturze, aby zachować te dwie zmienne, ale nie stosować ich jako predyktorów.
+
+```{r}
+flights_rec <-
+  recipe(arr_delay ~ ., data = train_data) |>
+  update_role(flight, time_hour, new_role = "ID")
+```
+
+Ten krok dodawania ról do receptury jest opcjonalny; celem użycia go tutaj jest to, że te dwie zmienne mogą zostać zachowane w danych, ale nie uwzględnione w modelu. Może to być wygodne, gdy po dopasowaniu modelu chcemy zbadać jakąś źle przewidzianą wartość. Te kolumny identyfikatora będą dostępne i można ich użyć, aby spróbować zrozumieć, co poszło nie tak.
+
+Aby uzyskać aktualny zestaw zmiennych i ról, użyj `summary()` funkcji:
+
+```{r}
+flights_rec |> summary()
+```
+
+### Modyfikacje zmiennych (inżynieria funkcji)
+
+Teraz możemy dodawać kroki przetwarzania do naszej receptury za pomocą operatora potoku. Być może rozsądne jest, aby `data` lotu miała wpływ na prawdopodobieństwo późnego przylotu. Odrobina **inżynierii funkcji** może znacznie przyczynić się do ulepszenia naszego modelu. Jak należy zakodować `datę` w modelu? Kolumna `date` ma obiekt R `date`, więc włączenie tej kolumny „tak jak jest" będzie oznaczać, że model przekształci ją na format liczbowy równy liczbie dni po dacie referencyjnej:
+
+```{r}
+flights_data |>
+  distinct(date) |>  # zwrava wartości unikalne daty (bez powtrzeń)
+  mutate(date = as.numeric(date))
+```
+
+Możliwe, że numeryczna zmienna daty jest dobrą opcją do modelowania; być może model skorzystałby na liniowym trendzie między logarytmem prawdopodobieństwa późnego przybycia a liczbową zmienną daty. Jednak może być lepiej dodać inne zmienne pochodzące z daty, które mają większy potencjał, aby być ważnymi dla modelu. Na przykład, możemy wyprowadzić następujące znaczące zmienne z pojedynczej zmiennej `date`:
+
+-   dzień tygodnia,
+-   miesiąc,
+-   czy data odpowiada świętemu, czy też nie.
+
+Zróbmy te kroki, dodając je do receptury `flights_rec`:
+
+```{r}
+flights_rec <- 
+  recipe(arr_delay ~ ., data = train_data) |> 
+  update_role(flight, time_hour, new_role = "ID") |> 
+  step_date(date, features = c("dow", "month")) |> 
+  step_holiday(date, 
+               holidays = timeDate::listHolidays("US"), 
+               keep_original_cols = F)
+
+flights_rec |> summary()
+```
+
+-   Za pomocą `step_date()` utworzyliśmy dwie nowe kolumny jakościowe z odpowiednim dniem tygodnia i miesiącem.
+
+-   Za pomocą `step_holiday()`, stworzyliśmy zmienną binarną wskazującą, czy bieżąca data jest świętem, czy nie. Wartość argumentu `timeDate::listHolidays("US")` używa pakietu `timeDate` do wyświetlenia listy 18 standardowych świąt w USA.
+
+-   Z `keep_original_cols = FALSE` usuwamy pierwotną `date` zmienną, ponieważ nie chcemy jej już w modelu. Wiele kroków receptury, które tworzą nowe zmienne, ma ten argument.
+
+Można zawsze podglądnąć, czy receptura działa poprawnie. Uruchomi przetwarzanie receptury, a następnie ją wyświetlimy.
+
+```{r}
+flights_rec |> prep() |> bake(train_data) |> _[1:10,] |> DT::datatable()
+```
+
+Zauważ, że powstało bardzo dużo zmiennych fikcyjnych. Każde święto ma oddzielną zmienną. Dodatkowo powstały dwie nowe zmienne na podstawie kolumny `date`.
+
+Następnie zwrócimy uwagę na typy zmiennych naszych predyktorów. Ponieważ planujemy wytrenować model regresji logistycznej, wiemy, że predyktory będą ostatecznie musiały być numeryczne, w przeciwieństwie do danych nominalnych, takich jak ciągi znaków i zmienne jakościowe. Innymi słowy, może istnieć różnica w sposobie, w jaki przechowujemy nasze dane (w czynnikach w ramce danych) i w jaki sposób wymagają ich podstawowe równania (macierz czysto numeryczna).
+
+W przypadku czynników takich jak i `dest` standardową praktyką jest przekształcenie ich w zmienne fikcyjne lub jakościowe, aby stały się wartościami liczbowymi. Są to wartości binarne dla każdego poziomu współczynnika.
+
+Jednak w przeciwieństwie do standardowych metod w R, recepturach nie tworzą się automatycznie fikcyjne zmienne; musisz zdefiniować ten krok. Dzieje się tak z dwóch powodów. Po pierwsze, wiele modeli nie wymaga predyktorów numerycznych, więc zmienne fikcyjne nie zawsze mogą być preferowane. Po drugie, receptury mogą być również wykorzystywane do celów innych niż modelowanie, gdzie nie fikcyjne wersje zmiennych mogą działać lepiej. Na przykład możesz chcieć utworzyć tabelę lub wykres ze zmienną jako pojedynczym czynnikiem. Z tych powodów musisz wyraźnie powiedzieć przepisom, aby tworzyły fikcyjne zmienne, używając `step_dummy()`:
+
+```{r}
+flights_rec <- 
+  recipe(arr_delay ~ ., data = train_data) |> 
+  update_role(flight, time_hour, new_role = "ID") |> 
+  step_date(date, features = c("dow", "month")) |> 
+  step_holiday(date, 
+               holidays = timeDate::listHolidays("US"), 
+               keep_original_cols = F) |> 
+  step_dummy(all_nominal_predictors())
+
+flights_rec |> summary()
+```
+
+Zrobiliśmy coś innego niż poprzednio: zamiast zastosować krok do pojedynczej zmiennej, użyliśmy **selektorów**, aby zastosować ten krok receptury do kilku zmiennych jednocześnie, `all_nominal_predictors()`. Funkcje selektora można łączyć w celu wybrania odpowiednich zmiennych.
+
+Na tym etapie receptury, krok ten wybiera zmienne `origin`, `dest`, i `carrier`. Zawiera również dwie nowe zmienne `date_dow` i `date_month`, które zostały utworzone przez `step_date()`
+
+Mówiąc ogólniej, selektory receptur oznaczają, że nie zawsze trzeba wykonywać kroki dla poszczególnych zmiennych pojedynczo. Ponieważ receptura zna typ zmiennej i rolę każdej kolumny, można je również wybrać (lub usunąć) przy użyciu tych informacji.
+
+Potrzebujemy jeszcze jednego ostatniego kroku, aby dodać go do naszej receptury. Ponieważ `carrier` i `dest` mają pewne rzadko występujące wartości współczynnik, możliwe jest utworzenie zmiennych fikcyjnych dla wartości, które nie istnieją w zbiorze uczącym. Na przykład jedno miejsce docelowe występuje tylko w zbiorze testowym:
+
+```{r}
+test_data |> 
+  distinct(dest) |> 
+  anti_join(train_data)
+```
+
+Kiedy receptura jest stosowana do zbioru uczącego (`train_data`), tworzona jest kolumna dla **LEX**, ponieważ poziomy zmiennych jakościowych pochodzą `flight_data` (nie ze zbioru uczącego), ale ta kolumna będzie zawierała same zera. Jest to „*predyktor zerowej wariancji*", ktry nie zawiera żadnych informacji w kolumnie. Chociaż niektóre funkcje języka R nie będą generować błędów dla takich predyktorów, zwykle powodują ostrzeżenia i inne problemy. `step_zv()` usunie kolumny z danych, gdy dane zestawu szkoleniowego mają pojedynczą wartość, więc jest dodawany do receptury po `step_dummy()`:
+
+```{r}
+flights_rec <-
+  recipe(arr_delay ~ ., data = train_data) |>
+  update_role(flight, time_hour, new_role = "ID") |>
+  step_date(date, features = c("dow", "month")) |>
+  step_holiday(date,
+               holidays = timeDate::listHolidays("US"),
+               keep_original_cols = F) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_zv(all_predictors())
+```
+
+Teraz stworzyliśmy recepturę tego, co należy zrobić z danymi. Teraz dowiemy się Jak wykorzystać przygotowaną przez nas recepturę?
+
+Gdy chcemy sprawdzić jakie operacje zostały zdefiniowane, możemy zastosować funkcje:
+
+```{r}
+flights_rec |> prep()
+```
+
+### Trenowanie modelu z recepturą (workflow)
+
+Użyjmy regresji logistycznej do modelowania danych lotu. Jak widzieliśmy w lekcji budowanie modelu, zaczynamy od specyfikacji modelu za pomocą pakietu `parsnip`:
+
+```{r}
+lr_mod <- 
+  logistic_reg() |> 
+  set_engine("glm")
+```
+
+Będziemy chcieli zastosować naszą recepturę w kilku działaniach podczas trenowania i testowania naszego modelu:
+
+1)  **Przetwarzanie receptury przy użyciu zbioru treningowego**: Obejmuje to wszelkie oszacowania lub obliczenia oparte na zbiorze treningowym. W przypadku naszej receptury zbir treningowy zostanie użyty do określenia, które predyktory należy przekształcić w zmienne fikcyjne, a które predyktory będą miały zerową wariancję w zbiorze uczącym i powinny zostać usunięte.
+2)  **Zastosowanie receptury do zbioru treningowego**: Tworzymy końcowy zbir predyktorów na zbiorze treningowym.
+3)  **Zastosuj przepis do zestawu testowego**: Tworzymy ostateczny zestaw predyktorów na zbiorze testowym. Nic nie jest przeliczane i żadne informacje ze zbioru testowego nie są tu używane; zmienna fikcyjna i wyniki zerowej wariancji ze zbioru uczącego są stosowane do zbioru testowego.
+
+Aby uprościć ten proces, możemy zastosować modelowy przepływ pracy, który łączy model i recepturę. Jest to proste podejście, ponieważ często potrzebne są różne receptury dla różnych modeli, więc gdy model i receptura są połączone, łatwiej jest trenować i testować przepływy pracy.
+
+Użyjemy pakietu `workflow` z **tidymodels**, aby połączyć:
+
+-   model `parsnip` (lr_mod)
+-   przepis `recipe` (flights_rec).
+
+```{r}
+logi_work <- 
+  workflow() |> 
+  add_model(lr_mod) |> 
+  add_recipe(flights_rec)
+
+logi_work
+```
+
+Teraz istnieje jedna funkcja, której można użyć do przygotowania receptury i treningu modelu na podstawie wynikowych predyktorów:
+
+```{r}
+logi_fit <-  
+  logi_work |> 
+  fit(data = train_data)
+
+
+flights_rec |> summary()
+```
+
+Ten obiekt zawiera sfinalizowaną recepturę i dopasowane obiekty modelu. Możesz chcieć wyodrębnić obiekty modelu lub receptury z przepływu pracy. Aby to zrobić, możesz użyć funkcji pomocniczych `extract_fit_parsnip()` i `extract_recipe()`. Na przykład tutaj wyciągamy dopasowany obiekt modelu, a następnie używamy funkcji, `broom::tidy()` aby uzyskać uporządkowany zbiór współczynnik modelu:
+
+```{r}
+logi_fit |> 
+  extract_fit_parsnip() |> 
+  tidy()
+```
+
+Teraz wyodrębniamy `recipe`
+
+```{r}
+logi_fit |> 
+  extract_recipe()
+```
+
+### Prognozowanie z workflow
+
+Naszym celem było przewidzenie, czy samolot przyleci z opóźnieniem większym niż 30 minut. Mamy tylko:
+
+1)  Skonfigurować model (wybór metody) (`lr_mod`) - `parsnip`,
+2)  Utworzyć recepturę przetwarzania wstępnego danych (`flights_rec`) - `recipe`,
+3)  Połączyć modelu i recepturę (logi_work) - `workflow`,
+4)  Trenowanie modelu za pomocą `fit()`.
+5)  Ostatni etap: Następnym krokiem jest użycie wytrenowanego modelu (logi_fit) do prognozowania na podstawie danych testowych, co zrobimy za pomocą jednego wywołania funkcji `predict()`. Metoda `predict()` stosuje recepturę do nowych danych, a następnie przekazuje je do dopasowanego modelu.
+
+::: callout-note
+UWAGA: Nie musimy wykonywać wstępnego przetwarzania danych testowych.
+:::
+
+```{r}
+predict(logi_fit, test_data)
+```
+
+Ponieważ nasza zmienna objaśniana (prognozowana) jest zmienna jakościową, dane wyjściowe z funkcji `predict()` zwracają przewidywaną klasę: `late` versus `on_time`. Ale powiedzmy, że zamiast tego chcemy przewidywane prawdopodobieństwa klasy dla każdego lotu. Aby je zwrócić, możemy określić, `type = "prob"` kiedy używamy `predict()` lub używamy funkcji `augment()` z modelem i danymi testowymi, aby zapisać je razem:
+
+```{r}
+predict(logi_fit, test_data, type = "prob")
+```
+
+Lub
+
+```{r}
+pred_test <- 
+  augment(logi_fit, test_data) |>
+  select(-dest,
+         -flight,
+         -origin,
+         -dep_time,
+         -air_time,
+         -distance,
+         -carrier,
+         -date)
+pred_test
+```
+
+Znamy przewidywane prawdopodobieństwa klas, więc w jaki sposób ocenimy wydajność naszego przepływu pracy? Na podstawie kilku pierwszych wierszy widać, że nasz model poprawnie przewidział te 5 lotów w czasie, ponieważ wartości `.pred_on_timep > 0,50`. Ale wiemy też, że mamy łącznie 81 455 wierszy do przewidzenia. Chcielibyśmy obliczyć metrykę, która mówi, jak dobrze nasz model przewidywał późne przyjazdy, w porównaniu z prawdziwym stanem naszej zmiennej wyniku, `arr_delay`.
+
+Użyjmy pola pod krzywą ROC jako naszej metryki, obliczonej za pomocą `roc_curve()` i `roc_auc()` z pakietu `yardsticks`.
+
+Aby wygenerować krzywą ROC, potrzebujemy przewidywanych prawdopodobieństw klas dla `late` i `on_time`, które właśnie obliczyliśmy w powyższym fragmencie kodu. Możemy utworzyć krzywą ROC z tymi wartościami, używając `roc_curve()`, a następnie przesyłając do metody `autoplot()`:
+
+```{r}
+pred_test  |> 
+  roc_curve(truth = arr_delay, .pred_late) |> 
+  autoplot()
+```
+
+Estymujemy pole pod krzywą:
+
+```{r}
+pred_test |> 
+  roc_auc(truth = arr_delay, .pred_late)
+```
+
+### Ćwiczenie \[2\]
+
+Przyjrzymy się danym `mydata` z pakietu `openair`[@openair]. Na podstawie tego zbioru danych spróbujemy zbudować model klasyfikacji. Będzie on przewidywał, czy stężenia ozonu było wysokie, czy było niskie. Zanim zdefiniujemy co oznacza "wysokie" i "niskie" przyjrzymy się zestawowi naszych danych.
+
+Potrzebujemy pakietu `openair` jest w nim dostępny zestaw danych `mydata` oraz kilka przydatnych funkcji analizy danych o jakości powietrza.
+
+```{r}
+library(tidymodels) 
+library(skimr) 
+library(GGally) 
+library(openair) 
+tidymodels_prefer()
+```
+
+Wczytujemy nasze dane, wybieramy jeden rok i przyglądamy się im. Zanim wykonasz ten krok zapoznaj się z dokumentacją zestawu danych `mydata`.
+
+```{r}
+air <- mydata |> selectByDate(year = 2002) 
+air |> skim()
+```
+
+W zbiorze danych znajdują się zmienne typu `numeric` oraz `POSIXct`. Dane charakteryzują się wysoką kompletnością. W tym przypadku usuniemy brakujące dane. Teoretycznie powinna być wykonana.
+
+```{r}
+air <- air |> na.omit()
+```
+
+Pytania: które zmienne są ważne w predykcji stężeń ozonu? Zgodnie z aktualnym stanem wiedzy istotne są parametry meteorologiczne, grupy czasu oraz tlenki azotu (przemiany chemiczne). Na wszelki wypadek przyjrzyjmy się współczynnikom korelacji.
+
+```{r}
+set.seed(222)
+air[sample(1:nrow(air), size = 300, replace = F),] |> 
+  select(nox, no2) |> 
+  ggpairs()
+
+
+library(ggpubr)
+# wykres regresji liniowej, do sprawdzenia danych 
+set.seed(222)
+air[sample(1:nrow(air), size = 300, replace = F),] |> 
+  select(nox, no2) |> 
+  ggplot(aes(nox, no2)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = T, formula = y ~ x) + 
+  stat_cor(label.x = 10, label.y = 80) + 
+  stat_regline_equation(label.x = 10, label.y = 82) +
+  theme_bw()
+```
+
+Wydaje się, że nasze założenia są poprawne. Zauważ, że nox i no2 są mocno skorelowane.
+
+Przyjrzymy się stężeniom ozonu.
+
+```{r}
+air |>    
+  ggplot(aes(date, o3)) +     
+  geom_line() +     
+  theme_bw()
+```
+
+Przyjmijmy założenie, że wysokie stężenia ozonu, to $O_3 > 10  \frac{\mu g}{m^3}$, a niskie to $O_3 < 10 \frac{\mu g}{m^3}$. Skorzystamy z podstawowej funkcji `cut` do przekształcenia zmiennej ilościowej na jakościową.
+
+```{r}
+air |> 
+  pull(o3) |> 
+  range()  
+
+air <-
+  air |>
+  mutate(ozone = cut(
+    o3,
+    breaks = c(-0.1, 10, 53),
+    labels = c("Niskie", "Wysokie")
+  ))
+```
+
+Sprawdzamy:
+
+```{r}
+air |> count(ozone)
+```
+
+Teraz zbuduj i przetestuj model regresji logistycznej. Następnie oceń jakość. Zastanów się, które zmienne uwzględnić w modelu, a które nie. Podczas dzielenia zestawu danych zastosuj równomierny podział danych (argument `strata = ozone`).
+
+-   Czy zmienne `date, wd, pm10, pm25, so2, co` wnoszą coś do modelu ?
+-   Zastanów się jakie role przypisać `no2` i `nox`, ponieważ te dwa predyktory są z sobą mocno skorelowane.
+-   Czy stosować przekształcenia `boxCox` lub `YeoJohnson` - dla jakich zmiennych?
+-   Czy normalizacja zmiennych numerycznych jest potrzebna ?
+-   Czy wyizolować z `date` podgrupy, które będą ważnymi predatorami.
+
+Zastosój: `set.seed(222)` do podziału danych na zbiory uczące i testowe.
+
+## Probkowanie (resampling)
+
+### Wprowadzenie
+
+#### Wstęp
+
+Dotychczas zbudowaliśmy model (`parsnip`) i wstępnie przetworzyliśmy dane wraz z recepturą (`recipes`). Wprowadziliśmy także przepływy pracy (`workflow`), umożliwiające połączenie `parsnip` i `recipes`. Kiedy mamy już wytrenowany model, potrzebujemy sposobu, aby zmierzyć, jak dobrze model ten przewiduje **nowe dane**. W tym przewodniku wyjaśniono, jak ocenić efektywność modelu na podstawie statystyk próbkowania (`resmapling`).
+
+Najpopularnijsze metody [@tidymodels] - patrz rozdział 10:
+
+-   V - krotna Walidacja krzyżowa - `Vfold_cv(data, v = 10, reapeats = 5),`
+-   Bootstrapping - `boostraps(data, times = 5)`,
+-   Prognozowanie kroczące - `rolling_original()`
+-   Walidacja krzyżowa Monte Carlo - `mc_cv(data, prop = 9/10, times = 10)`
+-   Walidacja krzyżowa z pominięciem jednego wyjścia - `loo_cv.`
+
+::: callout-important
+LOO jest nadmierne obliczeniowo i może nie mieć dobrych właściwości statystycznych
+:::
+
+Aby użyć kodu w tym artykule, musisz zainstalować następujące pakiety: `modeldata`, `ranger` i `tidymodels`.
+
+#### Pakiety
+
+Pakiet ranger to szybka implementacji lasu losowego [@ranger]
+
+```{r}
+library(ranger)
+library(modeldata)
+library(tidymodels)
+tidymodels_prefer()
+```
+
+#### Dane obrazu komórki
+
+Wykorzystamy dane `cells` dostępne w pakiecie `modeldata`, aby przewidzieć jakość segmentacji obrazu komórki przy ponownym próbkowaniu. Na początek ładujemy te dane do R:
+
+```{r}
+data("cells", package = "modeldata")
+cells
+```
+
+Sprawdź opis danych `?cells`
+
+Dane zawierają 58 zmiennych. Główna zmienna wynikowa, która nas interesuje, nazywa się `class`, jest to zmienna jakościowa (`factor`). Zanim jednak przejdziemy do prognozowania zmiennej `class`, musimy ją lepiej zrozumieć. Poniżej znajduje się krótkie wprowadzenie na temat segmentacji obrazu komórki.
+
+#### Prognozy jakości segmentacji obrazu
+
+Niektórzy biolodzy przeprowadzają eksperymenty na komórkach. W procesie odkrywania leków konkretny typ komórek można poddać działaniu leku lub kontroli, a następnie obserwować, aby zobaczyć, jaki będzie efekt (jeśli taki występuje). Powszechnym podejściem do tego rodzaju pomiarów jest obrazowanie komórek. Różne części komórek można pokolorować, co umożliwi określenie lokalizacji komórki.
+
+![Rys. 1. Segmentacja komórek](cells_1.png){fig-align="center"}
+
+Na przykład w górnym panelu tego obrazu przedstawiającego pięć komórek kolor zielony ma określić granicę komórki (kolorując coś, co nazywa się cytoszkieletem), podczas gdy kolor niebieski definiuje jądro komórki.
+
+Za pomocą tych kolorów komórki obrazu można podzielić na segmenty, dzięki czemu wiemy, które piksele należą do której komórki. Jeśli zostanie to zrobione dobrze, komórkę można zmierzyć na różne sposoby, ważne z biologii. Czasami kształt komórki ma znaczenie i do podsumowania takich cech, jak rozmiar lub „podłużność" komórki, stosuje się różne narzędzia matematyczne.
+
+Dolny panel pokazuje niektóre wyniki segmentacji. Komórki 1 i 5 są dość dobrze segmentowane. Jednakże komórki od 2 do 4 są skupione razem, ponieważ segmentacja nie była zbyt dobra. Konsekwencją złej segmentacji jest zanieczyszczenie danych; gdy biolog analizuje kształt lub rozmiar tych komórek, dane są niedokładne i mogą prowadzić do błędnych wniosków.
+
+Eksperyment na komórkach może obejmować miliony komórek, więc wizualna ocena ich wszystkich jest niewykonalna. Zamiast tego można utworzyć podróbkę, a komórki te mogą zostać ręcznie oznaczone przez ekspertów jako słabo segmentowane (PS) lub dobrze segmentowane (WS). Jeśli potrafimy dokładnie przewidzieć te etykiety, większy zbiór danych można ulepszyć, odfiltrowując komórki, które najprawdopodobniej będą słabo segmentowane.
+
+#### Dane
+
+Dane `cells` mają etykiety `class` --- każda komórka jest oznaczona jako słabo segmentowana (PS) lub dobrze segmentowana (WS). Każdy z nich ma także łącznie 56 predyktorów opartych na automatycznych pomiarach analizy obrazu. Na przykład, `avg_inten_ch_1`, czy jest to średnia intensywność danych zawartych w jądrze, `area_ch_1`, czy jest to całkowity rozmiar komórki i tak dalej (niektóre predyktory mają dość tajemniczy charakter).
+
+Liczność jest niezrównoważona. Jest dużo komórek słabo segmentowanych.
+
+```{r}
+cells |> 
+  count(class) |> 
+  mutate(prop = n/sum(n) * 100 |> round(x = _, digits = 1))
+```
+
+#### Podział danych
+
+Rozpoczynając projekt modelowania, często zdarza się, że zbiór danych dzieli się na dwie części:
+
+-   Zbiór uczący służy do szacowania parametrów, porównywania modeli i technik inżynierii funkcji, trenowania modelu itp.
+-   Zestaw testowy pozostaje w rezerwie do końca projektu, kiedy to poważnie rozważany powinien być tylko jeden lub dwa modele. Jest używany jako bezstronne źródło do pomiaru ostatecznej wydajności modelu.
+
+Istnieją różne sposoby tworzenia tych partycji danych. Najbardziej powszechnym podejściem jest użycie próbki losowej. Załóżmy, że jedna czwarta danych była zarezerwowana dla zbioru testowego. Losowe próbkowanie spowodowałoby losowe wybranie 25% do zbioru testowego, a resztę do zbioru uczącego. Możemy w tym celu skorzystać z pakietu `rsample` .
+
+Ponieważ w próbkowaniu losowym wykorzystywane są liczby losowe, ważne jest, aby ustawić ziarno liczby losowej. Dzięki temu liczby losowe będą mogły zostać odtworzone w późniejszym czasie (w razie potrzeby).
+
+Funkcja `rsample::initial_split()` pobiera oryginalne dane i zapisuje informację o sposobie wykonania partycji.
+
+::: callout-note
+W oryginalnej analizie autorzy stworzyli własny zbiór treningowo-testowy, a informacja ta została zawarta w kolumnie `case`. Aby zademonstrować, jak dokonać podziału, usuniemy tę kolumnę, zanim dokonamy podziału danych:
+:::
+
+```{r rsample}
+set.seed(123)
+cell_split <- initial_split(data = cells |> select(-case),
+                            strata = class, prop = 3/4)
+
+cell_train <- training(cell_split)
+cell_test <- testing(cell_split)
+```
+
+Sprawdzimy dla pewności jak zostały podzielony zestawy danych:
+
+```{r}
+nrow(cell_test) ; nrow(cell_train) # liczba
+
+nrow(cell_test)/nrow(cells) ; nrow(cell_train)/nrow(cells) # udział
+```
+
+Teraz sprawdzimy, czy funkcja strata odpowiednio podzieliła zmienną `class`
+
+```{r}
+cell_test |> 
+  count(class) |> 
+  mutate(prop = n/sum(n))
+
+cell_train |> 
+  count(class) |> 
+  mutate(prop = n/sum(n))
+```
+
+Tak zostały zachowane pierwotne proporcje. W każdym zbiorze danych częstość występowania PS to 36% próbki, a WS to około 64%.
+
+#### MODELOWANIE
+
+Las losowy (`random_forest`) to metoda zespołowa (`ensemble methods`) drzew decyzyjnych (`decision trees`). Metoda zespołowa tworzy dużą liczbę modeli drzew decyzyjnych w oparciu o różne wersje zestawów treningowych [@kuhn2013a].
+
+Jedną z zalet modelu lasu losowego jest to, że wymaga bardzo niewielkiego wstępnego przetwarzania danych, a parametry dostarczane są zwykle przez użytkownika. Z tego powodu nie będzie potrzeby przygotowania receptur dla tego zestawu danych.
+
+Tworzymy model lasu losowego, zastosujemy metodę dopasowania `ranger`:
+
+```{r}
+rf_mod <- 
+  rand_forest() |> 
+  set_engine("ranger") |> 
+  set_mode("classification")
+```
+
+Model lasu losowego wykorzystuje liczby losowe, więc ustawiamy ziarno w procesie dopasowania modelu.
+
+```{r}
+set.seed(234)
+rf_fit <- 
+  rf_mod |> 
+  fit(class ~ ., data = cell_train)
+rf_fit
+```
+
+#### Estymacja wydajności modelu
+
+Podczas projektu modelowania możemy stworzyć wiele różnych modeli. Aby dokonać wyboru między nimi, musimy wziąć pod uwagę skuteczność tych modeli, mierzoną niektórymi statystykami wydajności. W naszym przykładzie w tym artykule możemy zastosować następujące opcje:
+
+-   Obszar pod krzywą ROC (`Receiver Operating Characteristic`), oraz
+-   dokładność klasyfikacji (`accuracy`).
+
+`Krzywa ROC` wykorzystuje szacunki prawdopodobieństwa klas, aby ocenić dokładność w całym zestawie potencjalnych granic prawdopodobieństwa. Dokładność ogólna wykorzystuje przewidywania klas twardych do pomiaru wydajności. Przewidywania klas twardych mówią nam, czy nasz model przewidywał, PS czy WS dla każdej komórki. Jednak w oparciu o te przewidywania model w rzeczywistości szacuje prawdopodobieństwo. Aby sklasyfikować komórkę jako słabo segmentowaną, stosuje się prostą granicę prawdopodobieństwa 50%.
+
+Pakiet `yardstick` [@yardstick] zawiera funkcje służące do obliczania obu tych miar, zwane `roc_auc()`i `accuracy()`.
+
+Na pierwszy rzut oka dobrym pomysłem może być wykorzystanie danych ze zbioru uczącego do obliczenia tych statystyk. (Właściwie to bardzo zły pomysł.) Zobaczmy, co się stanie, jeśli spróbujemy tego. Aby ocenić wydajność na podstawie zbioru uczącego, wywołujemy metodę `predict()` w celu uzyskania oceny modelu.
+
+```{r}
+# Predykcja 
+rf_pred_train <-
+  predict(rf_fit, new_data = cell_train) |> 
+  bind_cols(predict(rf_fit, new_data = cell_train, type = "prob")) |> 
+  bind_cols(cell_train |> select(class))
+
+# Krzywa ROC
+rf_pred_train |> 
+  roc_curve(truth = class, .pred_PS) |> 
+  autoplot()
+
+# Pole powierzchni pod krzywą 
+rf_pred_train |> 
+  roc_auc(truth = class, .pred_PS)
+
+# Dokłądność
+rf_pred_train |> 
+  accuracy(truth = class, .pred_class)
+```
+
+Skoro już mamy ten model o wyjątkowych osiągach, przechodzimy do zestawu testowego. Niestety odkrywamy, że chociaż nasze wyniki nie są złe, to z pewnością są gorsze, niż początkowo sądziliśmy na podstawie przewidywania zbioru treningowego:
+
+```{r}
+rf_pred_test <- 
+  predict(rf_fit, new_data = cell_test) |> 
+  bind_cols(predict(rf_fit, new_data = cell_test, type = "prob")) |> 
+  bind_cols(cell_test |> select(class))
+
+# Krzywa rock
+rf_pred_test |> 
+  roc_curve(truth = class, .pred_PS) |> 
+  autoplot()
+
+# Powierzchnia pod krzywą 
+rf_pred_test |> 
+  roc_auc(truth = class, .pred_PS)
+
+# Dokłądność
+rf_pred_test |> 
+  accuracy(truth = class, .pred_class)
+```
+
+#### Zrozum co się stało:
+
+Istnieje kilka powodów, dla których statystyki zestawu treningowego, mogą być nierealistycznie optymistyczne:
+
+Modele takie jak losowe lasy, sieci neuronowe i inne metody uczenia maszynowego mogą zapamiętać zbiór uczący. Ponowne przewidywanie tego samego zestawu powinno zawsze skutkować niemal doskonałymi wynikami.
+
+Zbiór uczący nie może być dobrym arbitrem oceny modelu. Nie jest to niezależna informacja; przewidywanie zbioru uczącego może odzwierciedlać jedynie to, co model już wie.
+
+Aby lepiej zrozumieć drugi punkt, pomyślmy o analogii z nauczaniem. Załóżmy, że dajesz klasie test, następnie dajesz im odpowiedzi, a następnie przeprowadzasz ten sam test. Wyniki uczniów z drugiego testu nie odzwierciedlają dokładnie ich wiedzy na dany temat; wyniki te byłyby prawdopodobnie wyższe niż wyniki uzyskane w pierwszym teście.
+
+#### Próbkowanie na ratunek
+
+Metody ponownego próbkowania, takie jak walidacja krzyżowa i metoda **`bootstrap`**, to systemy symulacji empirycznej. Tworzą serię zbiorów danych podobnych do omawianego wcześniej podziału szkolenia/testowania; podzbiór danych służy do tworzenia modelu, a inny podzbiór służy do pomiaru wydajności. Ponowne próbkowanie jest zawsze stosowane w przypadku zestawu szkoleniowego. Ten schemat autorstwa [Kuhna i Johnsona (2019)](https://bookdown.org/max/FES/resampling.html) ilustruje wykorzystanie danych w metodach `resamplingu`:
+
+![Schemat podziału danych w próbkowaniu](https://www.tmwr.org/premade/resampling.svg)
+
+Na pierwszym poziomie tego diagramu pokazano, co się stanie, gdy użyjesz metody `rsample::initial_split()`, która dzieli oryginalne dane na zbiory uczące i testowe. Następnie wybierany jest zbiór uczący do ponownego próbkowania, a zbiór testowy jest przetrzymywany.
+
+W tym przykładzie zastosujmy 10-krotną walidację krzyżową (CV). Ta metoda losowo przydziela 1514 komórek w zestawie treningowym do 10 grup o mniej więcej równej wielkości, zwanych „folds". Podczas pierwszej iteracji ponownego próbkowania pierwsza część około 151 komórek jest trzymana w celu pomiaru wydajności. Jest to podobne do zbioru testowego, ale aby uniknąć nieporozumień, nazywamy te dane zestawem oceny `(assessment set)` w ramach tidymodels.
+
+Pozostałe 90% danych (około 1362 komórek) służy do dopasowania modelu. Ponownie brzmi to podobnie do zbioru szkoleniowego, więc w tidymodels nazywamy te dane zbiorem analitycznym (`analysis set`). Model wytrenowany na zestawie analitycznym, jest sprawdzany na zbiorze ocen w celu wygenerowania prognoz, a na podstawie tych prognoz obliczane są statystyki dokładności modelu.
+
+W tym przykładzie 10-krotna CV przechodzi iteracyją przez zagięcia i za każdym razem pozostawia inne 10% na potrzeby oceny modelu. Na zakończenie tego procesu powstaje 10 zestawów statystyk wydajności, które utworzono na 10 zestawach danych, które nie zostały wykorzystane w procesie modelowania. W przykładzie oznacza to 10 wartości statystyk dokładności i 10 obszarów pod krzywą ROC. Choć powstało 10 modeli, nie są one dalej wykorzystywane; nie szkolimy samych modeli w tych fałdach, ponieważ ich jedynym celem jest obliczanie statystyk oceny dokładności modelu.
+
+Ostateczne szacunki ponownego próbkowania dla modelu są średnimi statystykami oceny dokładności modelu z 10 prób w tym przypadku. Załóżmy na przykład, że dla naszych danych wyniki były następujące:
+
+```{r}
+#| output: true
+#| echo: false
+
+read.table(file = "test_data.txt", header = T, sep = ",") |> 
+  knitr::kable(digits = 3)
+```
+
+Na podstawie statystyk próbkowania ostateczna estymacja jakości modelu lasu losowego wyniesie 0,904 dla powierzchni pod krzywą ROC i 0,832 dla dokładności.
+
+Te statystyki próbkowania są skuteczną metodą pomiaru wydajności modelu bez bezpośredniego przewidywania zbioru uczącego jako całości.
+
+### Stosowanie próbkowania w tidymodels
+
+Aby wygenerować te wyniki, pierwszym krokiem jest utworzenie obiektu do ponownego próbkowania za pomocą narzędzia `rsample`. W `rsample` zaimplementowano kilka metod ponownego próbkowania. Walidację krzyżową można utworzyć za pomocą `vfold_cv()`:
+
+Poniżej przedstawiamy cały proces w formie uporządkowanej :)
+
+```{r}
+# 1) rsample - split
+
+set.seed(123)
+cell_split <- initial_split(data = cells |> select(-case),
+                            strata = class, prop = 3/4)
+
+cell_train <- training(cell_split)
+cell_test <- testing(cell_split)
+
+# 2) rsmaple - CV folds
+
+set.seed(345)
+folds <- vfold_cv(data = cell_train, v = 10)
+
+# 3) parsnip - model
+
+rf_mod <- 
+  rand_forest() |> 
+  set_engine("ranger") |> 
+  set_mode("classification")
+
+# print data
+folds 
+```
+
+Kolumna `split` zawiera informacje o tym, które wiersze należą do zbiorów analiz i ocen. Istnieją funkcje, których można użyć do wyodrębnienia poszczególnych ponownie próbkowanych danych, zwane `analysis()` i `assessment()`.
+
+Jednakże pakiet `tune` zawiera funkcje wysokiego poziomu, które mogą wykonać wymagane obliczenia w celu ponownego próbkowania modelu w celu pomiaru wydajności. Masz kilka możliwości zbudowania obiektu do ponownego próbkowania:
+
+-   Ponów próbkę specyfikacji modelu wstępnie przetworzonej za pomocą formuły lub przepisu , lub
+
+-   Ponów próbkę `workflow()`, która łączy w sobie specyfikację modelu i formułę/przepis.
+
+W tym przykładzie użyjmy `workflow()` który łączy model lasu losowego i formułę, ponieważ nie używamy przepisu. Niezależnie od tego, której z tych opcji użyjesz, składnia `fit_resamples()` jest bardzo podobna do `fit()`:
+
+```{r}
+# 4) workflow
+rf_wf <- 
+  workflow() |> 
+  add_model(rf_mod) |> 
+  add_formula(class ~ .)
+
+# 5) tune 
+set.seed(456)
+rf_fit_rs <- 
+  rf_wf |> 
+  fit_resamples(folds)
+
+rf_fit_rs
+```
+
+Wyniki są podobne do każdego podzbioru wyników (`folds`) z kilkoma dodatkowymi kolumnami. Kolumna `.metrics` zawiera statystyki oceny modelu utworzone na podstawie 10 zestawów ocen (`assesment set`). Można je ręcznie rozdzielić, ale pakiet `tune` zawiera szereg prostych funkcji, które mogą wyodrębnić te dane:
+
+```{r}
+rf_fit_rs |> 
+  collect_metrics() |> 
+  knitr::kable(digits = 3)
+```
+
+Pomyśl o tych wartościach, które mamy teraz dla dokładności i AUC. Te wskaźniki wydajności są teraz bardziej realistyczne (tj. niższe) niż nasza nierozważna pierwsza próba obliczenia wskaźników wydajności w powyższej sekcji. Gdybyśmy chcieli wypróbować różne typy modeli dla tego zbioru danych, moglibyśmy z większą pewnością porównać metryki wydajności obliczone przy użyciu ponownego próbkowania w celu wyboru pomiędzy modelami. Pamiętaj też, że na koniec projektu wracamy do zestawu testowego, aby oszacować ostateczną wydajność modelu. Przyjrzeliśmy się temu już raz, zanim zaczęliśmy używać `resamplingu`, ale przypomnijmy sobie wyniki:
+
+```{r}
+bind_rows(
+  rf_pred_test |>
+    roc_auc(truth = class, .pred_PS),
+  
+  rf_pred_test |>
+    accuracy(truth = class, .pred_class)
+) |>
+  knitr::kable(digits = 3)
+```
+
+### Ćwiczenie \[3\]
+
+Zastosuj metody `reamplingu` (CV, V-krotną CV i bootstrap) do ćwiczenia nr 2. Wykonaj te czynności dla modelu regresji logistycznej oraz lasu losowego. Sprawdź wyniki i napisz kilka krótkich wniosków. Pomoc: [Rozdział 10:](https://www.tmwr.org/resampling).
+
+## Optymalizacja hiper-parametrów
+
+### Wprowadzenie
+
+------------------------------------------------------------------------
+
+Parametry modelu a hiper-parametry:
+
+-   Parametr jest samodzielnie obliczany przez algorytm podczas procesu uczenia. np. wagi w sieciach neuronowych.
+
+-   Jeśli parametr jest definiowany przez użytkownika, a algorytmu stosuje go do uczenia modelu, wtedy nazywamy go hiper-parametrem (np. liczba drzew i iteracji w lesie losowym).
+
+Niektórych parametrów modelu nie można nauczyć bezpośrednio ze zbioru danych podczas uczenia modelu; tego rodzaju parametry nazywane są hiper-parametrami. Niektóre przykłady hiper-parametrów obejmują liczbę predyktorów stosowanych przy podziałach w modelach bazujących na drzewach *"tree-based model"* (nazywamy to `mtry` w tidymodels) lub szybkość uczenia się w modelu wzmocnionego drzewa *"boosted tree model"* (nazywamy to `learn_rate`). Zamiast uczyć się tego rodzaju hiper-parametrów podczas uczenia modeli, możemy oszacować najlepsze wartości tych parametrów, ucząc wiele modeli z próbkowaniem na zestawach danych i sprawdzając, jak dobrze działają wszystkie te modele. Proces ten nazywa się strojeniem (`tuning`).
+
+Aby użyć kodu z tego artykułu, musisz zainstalować następujące pakiety: `rpart`, `rpart.plot`, `tidymodels` i `vip`
+
+```{r}
+library(tidymodels)
+
+# Dodatkowe pakiety
+library(rpart.plot)  # wizualizacja drzew decyzyjnych 
+library(vip)         # wykres wagi zmiennych
+```
+
+### Dane
+
+------------------------------------------------------------------------
+
+Skorzystamy z zestawu danych omówionego w poprzednim rozdziale. W poprzedniej sekcji stworzyliśmy model, który pozwalał nam odrzucić obrazy które były słabo segmentowane.
+
+```{r}
+data("cells", package = "modeldata")
+cells
+```
+
+### Prognoza segmentacji obrazu z optymalizacją hiper-parametrów
+
+------------------------------------------------------------------------
+
+Las losowy to metoda zespołową opartą na drzewach i zazwyczaj dobrze radzi sobie z domyślnymi hiper-parametrami. Jednak dokładność niektórych innych modeli opartych na drzewach, takich jak modele drzewa wzmocnionego (`boosted tree model`) lub modele drzewa decyzyjnego (`decision tree model`), może być wrażliwa na wartości hiper-parametrów. Będziemy optymalizować model drzewa decyzyjnego. Istnieje kilka hiper-parametrów modeli drzew decyzyjnych, które można dostroić w celu uzyskania lepszej wydajności. Odkryjmy:
+
+-   parametr złożoności (który nazywamy `cost_complexity` w tidymodels) oraz
+
+-   maksimum `tree_depth`.
+
+Dostrajanie tych hiper-parametrów może poprawić wydajność modelu, ponieważ modele drzewa decyzyjnego są podatne na nadmierne dopasowanie. Dzieje się tak, ponieważ modele pojedynczego drzewa zwykle zbyt dobrze dopasowują się do danych uczących --- w rzeczywistości tak dobrze, że nadmiernie uczą się wzorców obecnych w danych uczących, co okazuje się szkodliwe przy przewidywaniu nowych danych.
+
+Dostroimy hiper-parametry modelu, aby uniknąć nadmiernego dopasowania. Dostrojenie wartości `cost_complexity` pomaga w przycinaniu naszego drzewa (zmniejsza rozmiar drzew). **Dodaje karę do błędów dla bardziej złożonych drzew**; koszt bliższy zeru zmniejsza liczbę przycinanych węzłów drzewa i jest bardziej prawdopodobne, że doprowadzi do powstania drzewa nadmiernie dopasowanego. Jednak wysoki koszt zwiększa liczbę przycinanych węzłów drzewa i może skutkować odwrotnym problemem -- drzewem niedopasowanym. Trening `tree_depth` z drugiej strony strojenie pomaga, powstrzymując wzrost naszego drzewa po osiągnięciu określonej głębokości. Chcemy dostroić te hiper-parametry, aby dowiedzieć się, jakie powinny być te dwie wartości, aby nasz model najlepiej wykonał zadanie przewidywania segmentacji obrazu.
+
+Zanim rozpoczniemy proces optymalizacji, dzielimy nasze dane na zbiory uczący i testowy, podobnie jak wtedy, gdy szkoliliśmy model z jednym domyślnym zestawem hiper-parametrów. Podobnie jak poprzednio, możemy użyć `strata = class`, jeśli chcemy, aby nasze zbiory szkoleniowe i testowe były tworzone przy użyciu próbkowania warstwowego, tak aby oba miały tę samą proporcję obu rodzajów segmentacji.
+
+```{r}
+set.seed(123)
+split <- initial_split(data = cells |> select(-case), 
+                       prop = 3/4, 
+                       strata = class)
+
+train <- training(split)
+test <- testing(split)
+```
+
+### Optymalizacja hiper-parametrów
+
+------------------------------------------------------------------------
+
+Zacznijmy od pakietu `parsnip`, wykorzystując `decision_tree()` model z silnikiem `rpart`. Aby dostroić hiper-parametry drzewa decyzyjnego `cost_complexity` i `tree_depth`, tworzymy specyfikację modelu, która określa, które hiper-parametry planujemy dostroić.
+
+```{r}
+tune_spec <- 
+  decision_tree(
+    cost_complexity = tune(), 
+    tree_depth = tune()) |> 
+  set_engine("rpart") |> 
+  set_mode("classification")
+
+tune_spec
+```
+
+`tune()` to obiekt zastępczym. Po procesie strojenia wybierze pojedynczą wartość liczbową dla każdego z optymalizowanych hiper-parametrów. Na razie określamy nasz obiekt modelu `parsnip` i identyfikujemy hiper-parametry, które będziemy trenować `tune()`.
+
+Nie możemy wytrenować tej specyfikacji na pojedynczym zestawie danych (takim jak cały zbiór uczący) i dowiedzieć się, jakie powinny być wartości hiper-parametrów, ale możemy wytrenować wiele modeli przy użyciu ponownie próbkowanych danych i sprawdzić, które modele okażą się najlepsze. Możemy utworzyć **regularną siatkę wartości** `dials::grid_regular()`, aby spróbować użyć wygodnych funkcji dla każdego hiper-parametru:
+
+Funkcja `grid_regular()` pochodzi z pakietu `dials`. Wybiera rozsądne wartości do wypróbowania dla każdego hiper-parametru; tutaj poprosiliśmy o 5 sztuk każdego. Ponieważ mamy dwa do dostrojenia, `grid_regular()` zwraca $5 * 5 = 25$ różnych możliwych kombinacji strojenia do wypróbowania w wygodnym formacie tibble.
+
+```{r}
+siatka <- grid_regular(cost_complexity(), 
+                       tree_depth(), 
+                       levels = 5)
+siatka
+
+# podgląd parametrów 
+
+siatka |> 
+  count(tree_depth)
+
+siatka |> 
+  count(cost_complexity)
+```
+
+Uzbrojeni w naszą siatkę wypełnioną 25 kandydującymi modelami drzew decyzyjnych, zastosujemy próbkowanie przy zastosowaniu metody "cross-valid":
+
+```{r}
+set.seed(234)
+folds <- vfold_cv(train)
+```
+
+Dostrojenie tidymodels wymaga ponownego próbkowania obiektu utworzonego za pomocą pakietu `rsample`. W tym przykładzie wybraliśmy kilka statystyk oceny jakości modelu `miary_oceny`. Pełną listę dostępnych statystyk znajdziesz [tuatj](https://yardstick.tidymodels.org/articles/metric-types.html)
+
+```{r}
+set.seed(345)
+
+# workflow
+
+work <- 
+  workflow() |> 
+  add_model(tune_spec) |> 
+  add_formula(class ~ .)
+
+# statystyki oceny dokładnosci modelu 
+
+miary_oceny <-
+  yardstick::metric_set(# tym parametrem możesz definiować
+    accuracy,
+    mcc,
+    npv,
+    roc_auc)
+
+# Optymalizacja 
+
+fit_tree <-
+  work |>
+  tune_grid(
+    resamples = folds,
+    grid = siatka,
+    metrics = miary_oceny
+  )
+
+fit_tree
+```
+
+Kiedy już mamy wyniki dostrajania, możemy je zbadać za pomocą wizualizacji, a następnie wybrać najlepszy wynik. Funkcja `collect_metrics()` daje nam uporządkowany spis wszystkich wyników. Mieliśmy 25 modeli kandydatów i dwie metryki, `accuracy` i `roc_auc` otrzymaliśmy wiersz dla każdego `.metric` modelu.
+
+```{r}
+fit_tree |> collect_metrics()
+```
+
+Być może więcej zyskamy, wykreślając te wyniki:
+
+```{r}
+fit_tree %>%
+  collect_metrics() %>%
+  mutate(tree_depth = factor(tree_depth)) %>%
+  ggplot(aes(cost_complexity, mean, color = tree_depth)) +
+  geom_line(size = 1.5, alpha = 0.6) +
+  geom_point(size = 2) +
+  facet_wrap(~ .metric, scales = "free", nrow = 2) +
+  scale_x_log10(labels = scales::label_number()) +
+  scale_color_viridis_d(option = "plasma", begin = .9, end = 0)
+```
+
+Widzimy, że nasze „najgrubsze" drzewo o głębokości 1 jest najgorszym modelem pod względem 3 metryk i wszystkich kandydujących wartości `cost_complexity`. Nasze najgłębsze drzewo, o głębokości 15, radziło sobie lepiej. Jednak najlepsze drzewo wydaje się znajdować pomiędzy tymi wartościami przy głębokości drzewa wynoszącej 4. Funkcja show_best() domyślnie pokazuje nam 5 najlepszych modeli kandydatów.
+
+Możemy również użyć funkcji `select_best()`, aby wyciągnąć pojedynczy zestaw wartości hiper-parametrów dla naszego najlepszego modelu drzewa decyzyjnego:
+
+```{r}
+fit_tree |> show_best("accuracy")
+fit_tree |> select_best("accuracy")
+```
+
+Są to wartości `tree_depth` i `cost_complexity` maksymalizujące dokładność tego zestawu danych obrazów komórek.
+
+### Ostateczny model
+
+------------------------------------------------------------------------
+
+Możemy zaktualizować (lub „sfinalizować") nasz `workflow` **work** za pomocą `select_best()`.
+
+```{r}
+best_mod <- fit_tree |> select_best("accuracy")
+
+final_mod <-  
+  work |> 
+  finalize_workflow(best_mod)
+```
+
+Na koniec dopasujmy ostateczny model do danych uczących i wykorzystajmy nasze dane testowe do oszacowania wydajności modelu, jakiej oczekujemy przy użyciu nowych danych. Możemy użyć tej funkcji `last_fit()` z naszym sfinalizowanym modelem; funkcja ta dopasowuje sfinalizowany model do **pełnego zbioru danych szkoleniowych i ocenia sfinalizowany model na danych testowych**.
+
+```{r}
+final_fit <- 
+  final_mod |> 
+  last_fit(split = split)
+
+final_fit %>%
+  collect_metrics()
+```
+
+```{r}
+final_fit |> 
+  collect_predictions() |> 
+  roc_curve(truth = class, .pred_PS) |> 
+  autoplot()
+```
+
+Metryki błędów ze zbioru testowego wskazują, że podczas naszej procedury dostrajania nie doszło do nadmiernego dopasowania.
+
+Obiekt `final_fit` zawiera ostateczny `workflow`, którego można użyć do przewidywania nowych danych lub lepszego zrozumienia wyników. Możesz chcieć wyodrębnić ten `obiekt`, używając jednej z `extract_` funkcji pomocniczych .
+
+```{r}
+final_fit |> extract_workflow()
+```
+
+Możemy utworzyć wizualizację drzewa decyzyjnego za pomocą innej funkcji pomocniczej, aby wyodrębnić podstawowe dopasowanie specyficzne dla silnika.
+
+```{r}
+#| fig-align: center
+
+final_fit |> 
+  extract_workflow() |> 
+  extract_fit_engine() |> 
+  rpart.plot(roundint = F)
+```
+
+Być może chcielibyśmy także zrozumieć, jakie zmienne są ważne w tym ostatecznym modelu. Możemy użyć pakietu `vip` do oszacowania ważności zmiennej na podstawie struktury modelu.
+
+```{r}
+#| fig-align: center
+# wykres 
+
+final_fit |> 
+  extract_workflow() |> 
+  extract_fit_parsnip() |>
+  vip() 
+
+# eksport danych do tabeli
+
+final_fit |>
+  extract_workflow() |>
+  extract_fit_parsnip() |>
+  vip() |> 
+  _$data |> 
+  knitr::kable(digits = 1)
+```
+
+### Ćwiczenie \[4\]
+
+------------------------------------------------------------------------
+
+Są to zautomatyzowane pomiary analizy obrazu, które są najważniejsze w przewidywaniu jakości segmentacji.
+
+Pozostawiam czytelnikowi zbadanie, czy można dostroić inny hiper-parametr drzewa decyzyjnego. Możesz zapoznać się z dokumentacją referencyjną lub skorzystać z `args()` funkcji, aby sprawdzić, które argumenty obiektu pasternak są dostępne:
+
+```{r}
+#| eval: false
+
+args(decision_tree)
+# lub 
+?decision_tree()
+```
+
+### Ćwiczenie \[5\]
+
+------------------------------------------------------------------------
+
+Zoptymalizuj hiper-parametry w modelu lasu losowego utworzonego w ćwiczeniu nr 3. Dostosuj ilość współczynników w siatce hiper-parametrów.
+
+## Przykład
+
+W celu realizacji tego tematu potrzebuje następujących pakietów `glmnet`, `ranger`, `readr`, `tidymodels`, `vip`, `ggthemes` i `purrr.`
+
+```{r}
+#| output: false
+
+# wczytanie wielu pakietów pętlą purrr  
+
+pkg = c("tidymodels",
+        "glmnet",
+        "ranger",
+        "readr",
+        "tidymodels",
+        "vip",
+        "ggthemes")  
+
+pkg |> 
+  purrr::map(.f = ~ require(.x, character.only = T))  
+
+tidymodels_prefer()
+```
+
+### Dane
+
+------------------------------------------------------------------------
+
+Wykorzystajmy dane dotyczące rezerwacji hoteli pochodzące od [Antonio, Almeidy i Nunes (2019)](https://doi.org/10.1016/j.dib.2018.11.126) , aby przewidzieć, w których pobytach hotelowych uczestniczyły dzieci i/lub niemowlęta, w oparciu o inne cechy pobytów, takie jak hotel, w którym zatrzymują się goście, ile płacą itp. Był to także [`#TidyTuesday`](https://github.com/rfordatascience/tidytuesday/tree/master/data/2020/2020-02-11)zbiór danych ze [słownikiem danych,](https://github.com/rfordatascience/tidytuesday/tree/master/data/2020/2020-02-11#data-dictionary) który warto przejrzeć, aby dowiedzieć się więcej o zmiennych. W tym studium przypadku użyjemy nieco [zmodyfikowanej wersji zbioru danych .](https://gist.github.com/topepo/05a74916c343e57a71c51d6bc32a21ce)
+
+Na początek wczytajmy dane naszego hotelu do R, co zrobimy, podając [`readr::read_csv()`](https://readr.tidyverse.org/reference/read_delim.html)adres URL, pod którym znajdują się nasze dane CSV:
+
+<https://tidymodels.org/start/case-study/hotels.csv>
+
+```{r}
+hotele <- 
+  read_csv(file = "https://tidymodels.org/start/case-study/hotels.csv") |>  
+  mutate_if(is.character, as.factor)  
+
+hotele |> dim() 
+hotele |> glimpse()
+```
+
+Należy pamiętać, że rozkład wielu zmiennych (takich jak liczba dorosłych/dzieci, rodzaj pokoju, zakupione posiłki, kraj pochodzenia gości itp.) jest inny w przypadku pobytów hotelowych, które zostały odwołane i które nie zostały odwołane [@antonio2019]. Ma to sens, ponieważ duża część tych informacji jest gromadzona (lub gromadzona ponownie, dokładniej) podczas meldowania się gości, zatem w przypadku odwołanych rezerwacji prawdopodobnie będzie brakować więcej danych niż w przypadku rezerwacji nieodwołanych i/lub będą one miały inną charakterystykę, gdy danych nie brakuje. Biorąc to pod uwagę, jest mało prawdopodobne, abyśmy mogli wiarygodnie wykryć znaczące różnice między gośćmi, którzy odwołali swoje rezerwacje, a tymi, którzy tego nie robią, na podstawie tego zbioru danych. Aby zbudować tutaj nasze modele, przefiltrowaliśmy już dane, aby uwzględnić tylko rezerwacje, które nie zostały odwołane, więc będziemy analizować tylko *pobyty w hotelach*.
+
+Opracujemy model pozwalający prognozować, w których pobytach hotelowych uczestniczyły dzieci i/lub niemowlęta, a w których nie. Nasza zmienna wynikowa `children` jest zmienną jakościową o dwóch poziomach:
+
+```{r}
+hotele |>    
+  count(children) |>    
+  mutate(prop = n/sum(n)) |>    
+  gt::gt() |>    
+  gt::tab_header(title = "Zmienna objaśniana")
+```
+
+Widzimy, że dzieci były jedynie w 8,1% rezerwacji. Tego typu brak równowagi klasowej często może siać spustoszenie w analizie. Chociaż istnieje kilka metod zwalczania tego problemu za pomocą [receptur](https://www.tidymodels.org/find/recipes/) (wyszukiwanie kroków do `upsample`lub `downsample`) lub innych bardziej wyspecjalizowanych pakietów, takich jak [themis](https://themis.tidymodels.org/) , analizy pokazane poniżej analizują dane w stanie niezmienionym.
+
+Zapoznaj się z dokumentacją pakiety `themis`.
+
+### Podział i próbkowanie danych
+
+W przypadku strategii podziału danych zarezerwujmy 25% pobytów w zestawie testowym. Wiemy, że nasza zmienna wynikowa `children` jest niezrównoważona, dlatego użyjemy warstwowej próby losowej:
+
+```{r}
+set.seed(123)
+
+splits <-
+  initial_split(data = hotele,
+                prop = 3 / 4,
+                strata = "children")
+
+hotel_other <- training(splits)
+hotel_test <- testing(splits)
+```
+
+```{r}
+hotel_other |>    
+  count(children) |>    
+  mutate(prop = n/sum(n))  
+
+hotel_test |>    
+  count(children) |>    
+  mutate(prop = n/sum(n))
+```
+
+W naszych dotychczasowych artykułach polegaliśmy na 10-krotnej weryfikacji krzyżowej jako podstawowej metodzie ponownego próbkowania przy użyciu plików [`rsample::vfold_cv()`](https://rsample.tidymodels.org/reference/vfold_cv.html). Stworzyło to 10 różnych ponownych próbek zbioru uczącego (który dalej podzieliliśmy na zbiory *analityczne* i *oceniające* ), tworząc 10 różnych metryk wydajności, które następnie agregowaliśmy.
+
+Na potrzeby tego studium przypadku zamiast używać wielu iteracji ponownego próbkowania, utwórzmy pojedynczą próbkę zwaną *zbiorem walidacyjnym* . W tidymodels zestaw walidacyjny jest traktowany jako pojedyncza iteracja ponownego próbkowania. Będzie to wycinek z 37 500 pobytów, które nie zostały wykorzystane do testów, które nazwaliśmy `hotel_other`. Ten podział tworzy dwa nowe zbiory danych:
+
+-   zbiór do pomiaru skuteczności, zwany *zbiorem walidacyjnym* , oraz
+
+-   pozostałe dane użyte do dopasowania modelu, zwane *zbiorem uczącym*.
+
+![](validation-split.svg){fig-align="center"}
+
+Użyjemy tej `validation_split()`funkcji, aby przydzielić 20% pobytów `hotel_other`do *zbioru walidacyjnego* i 30 000 pobytów do *zbioru uczącego*. Oznacza to, że nasze wskaźniki skuteczności modelu zostaną obliczone na pojedynczym zestawie 7500 pobytów w hotelach. Jest to dość duża ilość danych, więc ilość danych powinna zapewniać wystarczającą precyzję, aby stanowić wiarygodny wskaźnik tego, jak dobrze każdy model przewiduje wynik przy pojedynczej iteracji ponownego próbkowania.
+
+```{r}
+set.seed(234)  
+val_set <-
+  validation_split(data = hotel_other,
+                   prop = 3 / 4,
+                   strata = "children") 
+
+val_set
+```
+
+Ta funkcja, podobnie jak `initial_split()`, ma ten sam argument `strata`, który wykorzystuje podział warstwowy do utworzenia ponownego próbkowania. Oznacza to, że w naszych nowych zestawach walidacyjnych i uczących będziemy mieli mniej więcej takie same proporcje pobytów hotelowych z dziećmi i bez dzieci, w porównaniu z pierwotnymi `hotel_other` proporcjami.
+
+### Model regresji logistycznej
+
+Ponieważ nasza zmienna objaśniana `children`jest zmienną jakościową, regresja logistyczna jest dobrym pierwszym modelem do rozpoczęcia pracy. Użyjmy modelu, który może przeprowadzić selekcję zmiennych podczas uczenia. Pakiet [glmnet](https://cran.r-project.org/web/packages/glmnet/) R pasuje do uogólnionego modelu liniowego poprzez ukarane maksymalne prawdopodobieństwo. Ta metoda estymacji parametrów nachylenia regresji logistycznej wykorzystuje *karę*, tak że mniej istotne predyktory są kierowane w stronę wartości zerowej. Jedna z metod penalizacji `glmnet`, zwana [metodą lasso](https://en.wikipedia.org/wiki/Lasso_(statistics)), może w rzeczywistości ustawić nachylenie predyktorów na zero, jeśli zostanie zastosowana wystarczająco duża kara.
+
+#### Tworzymy model
+
+```{r}
+
+lr_mod <-
+  logistic_reg(penalty = tune(),
+               mixture = 1) |>
+  set_engine(engine = "glmnet") |>
+  set_mode("classification")
+```
+
+Na razie ustawimy `penalty`argument jako symbol zastępczy. `tune()` jest to hiper-parametr modelu, który dostroimy[,](https://www.tidymodels.org/start/tuning/) aby znaleźć najlepszą wartość do przewidywania na podstawie naszych danych. Ustawienie `mixture = 1` oznacza, że ​​model `glmnet` potencjalnie usunie nieistotne predyktory i wybierze prostszy model.
+
+#### Recipe
+
+```{r}
+holidays <-
+  c(
+    "AllSouls",
+    "AshWednesday",
+    "ChristmasEve",
+    "Easter",
+    "ChristmasDay",
+    "GoodFriday",
+    "NewYearsDay",
+    "PalmSunday"
+  )
+
+lr_recipe <-    
+  recipe(children ~ ., data = hotel_other) |>    
+  step_date(arrival_date) |>    
+  step_holiday(arrival_date, holidays = holidays) |>    
+  step_rm(arrival_date) |>    
+  step_dummy(all_nominal_predictors()) |>    
+  step_zv(all_predictors()) |>    
+  step_normalize(all_predictors())
+```
+
+Poniższe polecenie pozwoli ci sprawdzić, jakie nowe zmienne zostały utworzone.
+
+```{r}
+#| eval: false  
+
+lr_recipe |> prep() |> bake(hotel_other) |> glimpse()
+```
+
+#### workflow
+
+```{r}
+lr_workflow <-    
+  workflow() |>    
+  add_model(lr_mod) |>    
+  add_recipe(lr_recipe)
+```
+
+#### Siatka optymalizacji hipermaparametrów
+
+Zanim dopasujemy ten model, musimy skonfigurować siatkę `penalty`wartości optymalizacji. W poprzednich rozdziałach stosowaliśmy [`dials::grid_regular()`](https://www.tidymodels.org/start/case-study/start/tuning/#tune-grid) stworzyliśmy rozszerzoną siatkę opartą na kombinacji dwóch hiper-parametrów. Ponieważ mamy tutaj tylko jeden hiper-parametr do dostrojenia, możemy ustawić siatkę ręcznie, używając jednokolumnowej tabliczki z 30 wartościami kandydującymi:
+
+```{r}
+
+# automat 
+lr_grid <- grid_regular(penalty(), levels = 30)  
+
+# manualnie 
+lr_grid <- tibble(penalty = 10^seq(-4, -1, length.out = 30))
+```
+
+#### Uczenie i optymalizacja modelu
+
+Użyjmy `tune::tune_grid()` do wytrenowania tych 30 modeli regresji logistycznej z karą. Zapiszemy również prognozy zestawu walidacyjnego (poprzez wywołanie `control_grid()`), aby informacje diagnostyczne były dostępne po dopasowaniu modelu. Obszar pod krzywą ROC zostanie wykorzystany do ilościowego określenia skuteczności modelu na kontinuum progów zdarzeń (należy pamiętać, że wskaźnik zdarzeń -- odsetek pobytów obejmujących dzieci -- jest w przypadku tych danych bardzo niski).
+
+```{r}
+lr_res <-
+  lr_workflow |>
+  tune_grid(
+    resamples = val_set,
+    grid = lr_grid,
+    control = control_grid(save_pred = TRUE),
+    metrics = metric_set(roc_auc)
+  )
+```
+
+Łatwiej będzie wizualizować metryki zestawu walidacyjnego, wykreślając obszar pod krzywą ROC w funkcji zakresu wartości kar:
+
+```{r}
+library(ggthemes)
+
+lr_plot <-
+  lr_res |>
+  collect_metrics() |>
+  ggplot(aes(penalty, mean)) +
+  geom_point(size = 2) +
+  geom_line(linetype = 2) +
+  ylab("Pole powierzchni pod krzywa ROC") +
+  scale_x_log10() +
+  geom_text(aes(
+    x = penalty,
+    y = mean + 0.03,
+    label = .config |> stringr::str_sub(20, 21)
+  )) + 
+  ggdark::dark_theme_dark()
+
+lr_plot
+```
+
+Wykresy te pokazują nam, że wydajność modelu jest ogólnie lepsza przy mniejszych wartościach kary. Sugeruje to, że większość predyktorów jest ważna dla modelu. Widzimy także gwałtowny spadek obszaru pod krzywą ROC w kierunku najwyższych wartości kar. Dzieje się tak, ponieważ wystarczająco duża kara usunie *wszystkie* predyktory z modelu i, co nie jest zaskakujące, dokładność predykcji gwałtownie spada w przypadku braku predyktorów w modelu (przypomnijmy, że wartość ROC AUC wynosząca 0,50 oznacza, że ​​model nie radzi sobie lepiej niż szansa na przewidzenie właściwej klasy).
+
+Wydaje się, że wydajność naszego modelu utrzymuje się na stałym poziomie przy niższych wartościach kar, więc kierowanie się metryką `roc_auc` może prowadzić nas do wielu opcji „najlepszej" wartości tego hiper-parametru:
+
+```{r}
+top_models <- 
+  lr_res |> 
+  show_best("roc_auc", n = 15) |> 
+  arrange(penalty) |> 
+  mutate(mean = mean |> round(x = _, digits = 3))
+
+top_models |> gt::gt()
+```
+
+Każdy model kandydujący w tej tabeli prawdopodobnie zawiera więcej zmiennych predykcyjnych niż model w wierszu poniżej. Gdybyśmy użyli `select_best()`, zwróciłby model kandydujący 13 z wartością kary 0,00221, pokazaną linią przerywaną poniżej. I jest to wartość poprawna (patrz rys. niżej). Natomiast kilka modeli ma taką samą wartość `roc_auc`. Zawsze staraj się wybrać w takim przypadku model o tej samej dokładności, ale jak największej wartości `penalty`. Im większa wartość `penalty` tym mniej zbędnych predyktorów w modelu.
+
+```{r}
+lr_plot +
+  geom_vline(
+    xintercept = c(0.000853, 0.00221),
+    linetype = 4,
+    size = 1,
+    color = "black"
+  ) + 
+  ggtitle("Modele o tej samej skutecznosci (roc_auc = 0.877)")
+```
+
+Wybierzemy wart dla 15 modelu, ponieważ spadek skuteczności jest znikomy. Dodatkowo utworzymy wykres krzywej ROC.
+
+```{r}
+lr_best <- 
+  lr_res |> 
+  collect_metrics() |> 
+  arrange(penalty) |> 
+  slice(15)
+
+lr_best
+```
+
+```{r}
+lr_auc <- 
+  lr_res %>% 
+  collect_predictions(parameters = lr_best) %>% 
+  roc_curve(children, .pred_children) %>% 
+  mutate(model = "Logistic Regression")
+
+autoplot(lr_auc) +
+  ggdark::dark_theme_dark()
+```
+
+Skuteczność tego model regresji logistycznej jest dobra, ale nie przełomowa. Być może liniowy charakter równania predykcyjnego jest zbyt ograniczający dla tego zbioru danych. Następnym krokiem możemy rozważyć wysoce nieliniowy model wygenerowany przy użyciu metody zespołowej opartej na drzewach.
+
+### Model lasu losowego
+
+Skuteczną i wymagającą niewielkiej konserwacji techniką modelowania jest *las losowy*. W porównaniu z regresją logistyczną losowy model lasu jest bardziej elastyczny. Losowy las jest *modelem zespołowym* zazwyczaj składa się z tysięcy drzew decyzyjnych, z których każde pojedyncze drzewo widzi nieco inną wersję danych szkoleniowych i uczy się sekwencji reguł podziału w celu przewidywania nowych danych. Każde drzewo jest nieliniowe, a agregacja między drzewami sprawia, że ​​losowe lasy również są nieliniowe, ale solidniejsze i stabilniejsze w porównaniu z pojedynczymi drzewami. Modele oparte na drzewach, takie jak lasy losowe, wymagają bardzo niewielkiego przetwarzania wstępnego i mogą skutecznie obsługiwać wiele typów predyktorów (rzadkie, skośne, ciągłe, jakościowe itp.).
+
+#### Tworzymy model
+
+Chociaż domyślne hiper-parametry dla losowych lasów zwykle dają rozsądne wyniki, planujemy dostroić dwa hiper-parametry, które naszym zdaniem mogą poprawić wydajność. Niestety, trenowanie i dostrajanie losowych modeli lasów może być kosztowne obliczeniowo. Obliczenia wymagane do dostrojenia modelu można zwykle łatwo uruchomić równolegle na wielu rdzeniach procesora, aby skrócić czas uczenia. Pakiet `tune` może wykonać [przetwarzanie równoległe](https://tune.tidymodels.org/articles/extras/optimizations.html#parallel-processing) i umożliwia użytkownikom korzystanie z wielu rdzeni lub oddzielnych maszyn w celu dopasowania modeli.
+
+Jednak tutaj używamy pojedynczego zestawu sprawdzającego, więc równoległość nie wchodzi w grę przy użyciu pakietu `tune`. W tym konkretnym przypadku dobrą alternatywą jest sam silnik. Pakiet Ranger oferuje wbudowany sposób równoległego obliczania poszczególnych losowych modeli lasów. Aby to zrobić, musimy znać liczbę rdzeni, z którymi musimy pracować. Możemy użyć pakietu równoległego, aby sprawdzić liczbę rdzeni na twoim komputerze, aby zrozumieć, ile równoległości możesz wykonać:
+
+```{r}
+cores <- parallel::detectCores()
+cores
+```
+
+Mamy 16 rdzeni do pracy. Możemy przekazać te informacje do silnika `Ranger`, kiedy konfigurujemy nasz `rand_forest()` model `parsnip`. Aby umożliwić przetwarzanie równoległe, możemy przekazać argumenty specyficzne dla silnika, takie jak `num.threads`, gdy ustawiamy silnik:
+
+Najpierw znajdź dokumentację pakietu `ranger`
+
+```{r}
+#| eval: false  
+?ranger
+```
+
+```{r}
+tidymodels_prefer()
+
+rf_mod <-
+  rand_forest(mtry = tune(),
+              min_n = tune(),
+              trees = 1000) |>
+  set_engine(engine = "ranger",
+             num.threads = cores - 1) |>
+  set_mode(mode = "classification")
+```
+
+Działa to dobrze w tym kontekście modelowania, ale warto to powtórzyć: jeśli używasz innej metody ponownego próbkowania, pozwól, aby `tune` wykonał za Ciebie przetwarzanie równoległe - zazwyczaj nie zalecamy polegania w tym celu na silniku modelowania (tak jak to zrobiliśmy tutaj).
+
+W tym modelu użyliśmy `tune()` jako symbolu zastępczego wartości argumentów `mtry`i `min_n`, ponieważ są to nasze dwa hiper-parametry, które będziemy optymalizować.
+
+#### Recipe and workflow
+
+W przeciwieństwie do modeli regresji logistycznej, modele lasu losowego nie wymaga [fikcyjnych](https://bookdown.org/max/FES/categorical-trees.html) lub znormalizowanych zmiennych predykcyjnych. Niemniej jednak chcemy ponownie przeprowadzić inżynierię funkcji z naszą `arrival_date` zmienną. Tak jak poprzednio, predyktor daty został zaprojektowany w taki sposób, aby losowy model lasu nie musiał ciężko pracować, aby wydobyć te potencjalne wzorce z danych.
+
+```{r}
+rf_recipe <- 
+  recipe(children ~ ., data = hotel_other) |> 
+  step_date(arrival_date) |> 
+  step_holiday(holidays = holidays) |> 
+  step_rm(arrival_date)
+```
+
+Dodanie tego przepisu do naszego modelu pasternaku zapewnia nam nowy sposób przewidywania, czy pobyt w hotelu obejmował dzieci i/lub niemowlęta jako gości w losowym lesie:
+
+```{r}
+rf_workflow <- 
+  workflow() |> 
+  add_model(rf_mod) |> 
+  add_recipe(rf_recipe)
+```
+
+#### Dopasowanie modelu
+
+Kiedy konfigurowaliśmy nasz model pasternaku, wybraliśmy dwa hiper-parametry do strojenia:
+
+```{r}
+rf_mod
+```
+
+```{r}
+extract_parameter_set_dials(rf_mod)
+```
+
+hiper-parametr `mtry`określa liczbę zmiennych predykcyjnych, które każdy węzeł drzewa decyzyjnego „widzi" i o których może się dowiedzieć, zatem może wynosić od 1 do całkowitej liczby obecnych cech; kiedy `mtry`= wszystkie możliwe cechy, model jest taki sam, jak pakowanie drzew decyzyjnych. hiper-parametr `min_n`ustawia minimum obserwacji `n` do podziału w dowolnym węźle.
+
+Do dostrojenia użyjemy projektu wypełniającego przestrzeń, z 25 kandydatami na modele:
+
+```{r}
+set.seed(345)
+rf_res <- 
+  rf_workflow |> 
+  tune_grid(resamples = val_set, 
+            grid = 25, 
+            control = control_grid(save_pred = T),
+            metrics = metric_set(roc_auc))
+```
+
+Komunikat wydrukowany powyżej *„Tworzenie danych przetwarzania wstępnego w celu sfinalizowania nieznanego parametru: `mtry`"* jest związany z rozmiarem zestawu danych. Ponieważ `mtry` zależy od liczby predyktorów w zestawie danych, `tune_grid()` określa górną granicę `mtry` po otrzymaniu danych.
+
+```{r}
+rf_res |> show_best(n = 5)
+```
+
+Od razu widzimy, że te wartości dla obszaru pod **ROC** wyglądają bardziej obiecująco niż nasz najlepszy model wykorzystujący ukaraną regresję logistyczną, i dał ROC AUC wynoszący 0,876.
+
+Naniesienie wyników procesu dostrajania pokazuje, że zarówno `mtry` (liczba predyktorów w każdym węźle), jak i `min_n`(minimalna liczba punktów danych wymaganych do dalszego podziału) powinny być dość małe, aby zoptymalizować wydajność. Jednakże zakres osi y wskazuje, że model jest bardzo odporny na wybór wartości tych parametrów -- wszystkie wartości ROC AUC z wyjątkiem jednej są większe niż 0,90.
+
+```{r}
+autoplot(rf_res) + 
+  geom_line() + 
+  geom_point(size = 2) + 
+  ggdark:::dark_theme_dark()
+```
+
+Wybierzmy najlepszy model zgodnie z metryką ROC AUC. Nasze ostateczne wartości parametrów strojenia to:
+
+```{r}
+rf_best <- 
+  rf_res |> select_best()
+rf_best
+```
+
+Aby obliczyć dane potrzebne do wykreślenia krzywej ROC, używamy `collect_predictions()`. Jest to możliwe tylko po dostrojeniu za pomocą `control_grid(save_pred = TRUE)`. W wynikach widać dwie kolumny, które zawierają nasze prawdopodobieństwa klasowe do przewidywania pobytów hotelowych obejmujących i nieuwzględniających dzieci.
+
+Aby odfiltrować przewidywania tylko dla naszego najlepszego modelu lasu losowego, możemy użyć tego `parameters`argumentu i przekazać mu nasz tibble z najlepszymi wartościami hiper-parametrów z tuningu, które nazwaliśmy `rf_best`:
+
+```{r}
+rf_auc <-
+  rf_res |>
+  collect_predictions(parameters = rf_best) |>
+  roc_curve(children, .pred_children) |>
+  mutate(model = "Random Forest")
+
+rf_auc |> 
+  autoplot() + 
+  ggdark::dark_theme_dark()
+```
+
+Prównajmy modele:
+
+```{r}
+bind_rows(lr_auc,rf_auc) |> 
+  ggplot(aes(x = 1 - specificity, y = sensitivity, col = model)) +
+  geom_path(lwd = 1.5) +
+  geom_abline(lty = 3) + 
+  coord_equal() +
+  scale_color_manual(values = c("black", "white")) +
+  ggdark::dark_theme_dark()
+```
+
+### Dopasowanie ostatecznego modelu
+
+Naszym celem było przewidzenie, w których pobytach hotelowych są dzieci i/lub niemowlęta. Model losowego lasu wyraźnie działał lepiej niż model regresji logistycznej z karą i byłby naszym najlepszym wyborem do przewidywania pobytów hotelowych z dziećmi i bez dzieci. Po wybraniu najlepszego modelu i wartości hiper-parametrów naszym ostatnim krokiem jest dopasowanie ostatecznego modelu do wszystkich wierszy danych, które pierwotnie nie były przeznaczone do testów (zarówno zestawu szkoleniowego, jak i walidacyjnego łącznie), a następnie po raz ostatni ocenić wydajność modelu z wyciągniętym zestawem testowym.
+
+Zaczniemy od ponownego zbudowania naszego obiektu modelu pasternaku od zera. Najlepsze wartości hiper-parametrów bierzemy z naszego losowego modelu lasu. Kiedy ustawiamy silnik, dodajemy nowy argument: `importance = "impurity"`. Zapewni to *zmienne* wyniki ważności dla tego ostatniego modelu, co daje pewien wgląd w to, które predyktory wpływają na wydajność modelu.
+
+```{r}
+rf_best
+
+last_rf_mod <- 
+  rand_forest(mtry = 8, min_n = 12, trees = 1000) |> 
+  set_engine("ranger", num.threads = cores-2, importance = "impurity") |> 
+  set_mode("classification")
+
+last_rf_work <- 
+  rf_workflow |> 
+  update_model(last_rf_mod)
+
+set.seed(345)
+last_rf_fit <- 
+  last_rf_work |> 
+  last_fit(split = splits)
+
+last_rf_fit
+```
+
+```{r}
+last_rf_fit |> 
+  collect_metrics()
+```
+
+Ta wartość ROC AUC jest całkiem zbliżona do tej, którą widzieliśmy, gdy dostrajaliśmy losowy model lasu za pomocą zestawu walidacyjnego, co jest dobrą wiadomością. Oznacza to, że nasze szacunki dotyczące tego, jak dobrze nasz model będzie sobie radził z nowymi danymi, nie odbiegały zbytnio od tego, jak faktycznie nasz model radził sobie z niewidocznymi danymi testowymi.
+
+Dostęp do tych zmiennych wyników ważności możemy uzyskać za pośrednictwem `.workflow`kolumny. Możemy [wyodrębnić dopasowanie](https://tune.tidymodels.org/reference/extract-tune.html) z obiektu przepływu pracy, a następnie użyć pakietu `vip` do wizualizacji zmiennych ocen ważności dla 20 najważniejszych funkcji:
+
+```{r}
+last_rf_fit |> 
+  extract_fit_parsnip() |> 
+  vip(num_features = 20) +
+  scale_x_discrete(expand = c(0,0)) +
+  scale_y_continuous(expand = c(0,0)) +
+  geom_boxplot(color = "black", fill = "grey85") +
+  ggdark::dark_theme_dark()
+```
+
+Najważniejszymi predyktorami decydującymi o tym, czy w hotelu były dzieci, czy nie, był ...
+
+Wygenerujmy naszą ostatnią krzywą ROC do wizualizacji. Ponieważ przewidywane przez nas zdarzenie jest pierwszym poziomem czynnika `children`(„dzieci"), podajemy `roc_curve()` odpowiednie [prawdopodobieństwo klasowe](https://yardstick.tidymodels.org/reference/roc_curve.html#relevant-level) `.pred_children` :
+
+```{r}
+last_rf_fit |> 
+  collect_predictions() |> 
+  roc_curve(children, .pred_children) |> 
+  autoplot() +
+  ggdark::dark_theme_dark()
+```
+
+Na podstawie tych wyników statystyki wydajności zestawu walidacyjnego i zestawu testowego są bardzo zbliżone, więc mielibyśmy dość dużą pewność, że nasz model lasu losowego z wybranymi hiper-parametrami będzie dobrze działał podczas przewidywania nowych danych
+
+### Co dalej:
+
+Oto kilka dodatkowych pomysłów na to, gdzie dalej się udać:
+
+-   Zapoznaj się ze statystyką i modelowaniem dzięki naszym obszernym [książkom](https://www.tidymodels.org/books/) .
+
+-   Zajrzyj głębiej do [witryn z dokumentacją pakietów](https://www.tidymodels.org/packages/) , aby znaleźć funkcje spełniające Twoje potrzeby w zakresie modelowania. Skorzystaj z [przeszukiwalnych tabel,](https://www.tidymodels.org/find/) aby sprawdzić, co jest możliwe.
+
+-   Bądź na bieżąco z najnowszymi informacjami na temat pakietów tidymodels na [blogu tidyverse](https://www.tidyverse.org/tags/tidymodels/) .
+
+-   Znajdź sposoby, aby poprosić o [pomoc](https://www.tidymodels.org/help/) i [przyczynić się do tidymodels](https://www.tidymodels.org/contribute) , aby pomóc innym.
+
+### Ćwiczenie \[6\]
+
+Na podstawie danych `mydata` (1 rok) zaproponuj model prognozowania poziomów stężeń O~3~ (modele regresji). Zastosuj trzy metody:
+
+1.  regresja liniowa prosta (`glmnet`),
+
+2.  drzewa decyzyjne (`rpart`)
+
+3.  las losowy (`ranger`).
+
+Najważniejsze punkty:
+
+-   przekształć kierunek wiatru na zmienną kategoryczną, definiując 16 kierunków wiatru.
+
+-   utwórz zestaw walidacyjny bez resamplingu,
+
+-   utwórz receptury dla każdego modelu - sprawdź wymagania modeli,
+
+-   przeprowadź optymalizację hiper-parametrów,
+
+-   zbuduj ostateczny modele,
+
+-   Sprawdź który model był najlepszy,
+
+-   Najlepszą graficzną metodą porównania wyników oceny dokładności na zbiorze testowym jest wykres rozrzutu z linią modelu idealnego.
+
+#### Wprowadzenie
+
+```{r}
+#| output: false
+
+pkg = c(
+  "tidymodels",
+  "glmnet",
+  "ranger",
+  "rpart",
+  "readr",
+  "tidymodels",
+  "vip",
+  "ggthemes",
+  "openair",
+  "gt"
+)
+
+pkg |> 
+  purrr::map(.f = ~ require(.x, character.only = T)) ; rm(pkg)
+
+tidymodels_prefer()
+```
+
+```{r}
+# Wybierz lokalizacje na podstawie danych w tabeli i wczytaj dowolny zestaw danych:
+
+importMeta(source = "aurn") |> knitr::kable()
+
+dane <- importAURN(site = "kc1", year = 2021)
+
+# przyjrzy się danym 
+skimr::skim(dane)
+
+dane <- dane |> 
+  select(o3, nox, no2, no, ws, wd, air_temp) |> 
+  na.omit()
+
+# wczytuje funkcje wd_factor, która konwertuej stopnie na 16 kierunków waitru
+source(file = "function_wd_factor.R") 
+
+dane <- dane |> wd_factor(wd = wd) ; dane
+
+dane |> select(-wd, - wd_cardinal) |> 
+  GGally::ggpairs()
+```
+
+NOx, NO i NO~2~ są z sobą mocno skorelowane. Wykonywaliśmy podobne analizy. Redukcja wymiarów, lub wybór jednego parametru. Usuniemy NO~2~ i NO.
+
+```{r}
+dane |> select(-wd, -wd_cardinal, -no2, -nox) |> 
+  GGally::ggpairs()
+```

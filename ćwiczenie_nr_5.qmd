@@ -1,0 +1,423 @@
+---
+title: "Ćwiczenie [5]"
+author: "Mateusz Rzeszutek"
+format: 
+  html:
+    self-contained: true
+    toc: true
+    toc-depth: 4
+    toc-location: right
+    toc-title: "Spis treści"
+    number-sections: true
+    number-depth: 4
+    code-fold: show
+    code-summary: "Show the code"
+    code-tools: true
+    code-block-bg: true
+    code-block-border-left: "black"
+    code-line-numbers: false
+    code-copy: true
+    smooth-scroll: true
+    anchor-sections: true
+    link-external-icon: true
+    link-external-newwindow: true
+    theme:
+        light: cosmo
+        dark: darkly
+    fontsize: 1.0em
+    linestretch: 1.5
+editor: 
+  markdown: 
+    wrap: 72
+execute:
+  warning: false
+  echo: true
+  error: false
+editor_options: 
+  chunk_output_type: console
+---
+
+## Ćwiczenie \[5\]
+
+## Pakiety
+
+```{r}
+library(tidymodels)
+library(openair)
+library(skimr)
+tidymodels_prefer()
+```
+
+## Przygotowanie danych
+
+```{r}
+air <- mydata |> selectByDate(year = 2002)
+air |> skim()
+
+air <- air |> na.omit()
+
+air <- air |> 
+  mutate(ozone = cut(o3, 
+                     breaks = c(-0.1, 10, 53), 
+                     labels = c("Niskie", "Wysokie")
+                     )
+         )
+```
+
+## Podział danych
+
+```{r}
+# losuje tylko 1000 obserwacji, to jest tet chcę by szybko się liczyło. 
+set.seed(222)
+air <- air[sample(nrow(air), size = 1000), ]
+
+set.seed(222)
+air_split <- initial_split(data = air, prop = 3/4, strata = ozone)
+
+train_air <- training(air_split)
+test_air <- testing(air_split)
+
+# rsampling
+set.seed(222)
+folds <- vfold_cv(train_air)
+
+# yardstick
+param_eval <- metric_set(accuracy, mcc, npv, roc_auc)
+```
+
+## Recipe i model
+
+```{r}
+#| eval: false
+# recipe
+
+air_rec <-
+  recipe(ozone ~ ., data = train_air) |>
+  update_role(o3, wd, date, pm10, pm25, so2, co, no2, new_role = "ID") |>
+  step_BoxCox(ws, nox) |>  # daje ten sam efet co metoda Yeo-Johnson
+  # step_normalize(ws, nox, no2) |> # nie pomaga
+  step_date(date, features = c("month")) |>
+  step_time(date, features = c("hour")) |>
+  step_mutate(date_hour = as.factor(date_hour)) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_zv()
+
+
+air_rec |> prep() |> bake(train_air)
+
+# tune models
+
+tune_rf <- 
+  rand_forest(mtry = tune(), 
+              trees = tune(), 
+              min_n = tune()) |> 
+  set_engine("ranger", importance = "impurity") |> 
+  set_mode("classification")
+
+
+# tune grid 
+
+# [uwaga to jest trudne] patrz:
+# https://stackoverflow.com/questions/75311361/cannot-tune-the-mtry-parameter-in-my-random-forest-with-ranger-using-tidy-mode
+
+grid_rf <-
+  grid_regular(extract_parameter_set_dials(tune_rf) |>
+                 finalize(air_rec |>
+                            prep() |>
+                            bake(train_air)),
+               levels = 5)
+ 
+nrow(grid_rf)
+grid_rf |> count(mtry) 
+grid_rf |> count(trees)
+grid_rf |> count(min_n)
+
+# workflow 
+
+work_rf <- 
+  workflow() |> 
+  add_model(tune_rf) |> 
+  add_recipe(air_rec)
+
+# optymalizacja 
+set.seed(222)
+fit_rf <-
+  work_rf |>
+  tune_grid(resamples = folds,
+            grid = grid_rf,
+            metrics = param_eval)
+
+save(fit_rf, work_rf, air_rec, tune_rf, grid_rf, file = "worf_rf.rdata")
+```
+
+```{r}
+load(file = "worf_rf.rdata")
+```
+
+## Sprawdzamy wyniki
+
+```{r}
+fit_rf |> collect_metrics()
+fit_rf |> show_best()
+
+bind_rows(
+  fit_rf |> select_best("accuracy") |> mutate(type = "accu"),
+  fit_rf |> select_best("mcc") |> mutate(type = "mcc"),
+  fit_rf |> select_best("npv") |> mutate(type = "npv"),
+  fit_rf |> select_best("roc_auc") |> mutate(type = "roc_auc")
+) |> gt::gt()
+```
+
+**mtry = 12** - jest ok :)
+
+```{r}
+fit_rf %>%
+  collect_metrics() |> 
+  filter(mtry == 12) |> 
+  mutate(min_n = factor(min_n)) |> 
+  ggplot(aes(trees, mean, color = min_n)) +
+  geom_line(size = 1.5, alpha = 0.6) +
+  geom_point(size = 2) +
+  facet_wrap(~ .metric, scales = "free", nrow = 2) +
+#  scale_x_log10(labels = scales::label_number()) +
+  scale_color_viridis_d(option = "plasma", begin = .9, end = 0)
+
+
+fit_rf %>%
+  collect_metrics() |> 
+  filter(trees == 1000) |> 
+  mutate(min_n = factor(min_n)) |> 
+  ggplot(aes(mtry, mean, color = min_n)) +
+  geom_line(size = 1.5, alpha = 0.6) +
+  geom_point(size = 2) +
+  facet_wrap(~ .metric, scales = "free", nrow = 2) +
+#  scale_x_log10(labels = scales::label_number()) +
+  scale_color_viridis_d(option = "plasma", begin = .9, end = 0)
+```
+
+Powinniśmy zagęścić siatkę dla `trees` w zakresie od 0 do 1000, ponieważ
+powyżej nic się nie zmiania. Model z 1000 drzew może być przetrenowany.
+
+To samo tyczy się **mtry** - przedział między 2 a 14.
+
+min_n - 2 to za mało, ale zagaścieć między 10 a 30.
+
+## Ponowna optymalizacja (zagęszczona siatka)
+
+```{r}
+#| eval: false
+grid_rf2 <-
+  crossing(mtry = seq(2, 14, 2), 
+           trees = seq(200, 1000, 100), 
+           min_n = seq(2, 30, 4))
+
+# oprymalizacja
+
+fit_rf2 <-
+  work_rf |>
+  tune_grid(resamples = folds,
+            grid = grid_rf2,
+            metrics = param_eval)
+
+save(grid_rf2, fit_rf2, file = "work_rf2.rdata")
+```
+
+```{r}
+load(file = "work_rf2.rdata")
+```
+
+## Sprawdzamy wyniki po raz kolejny
+
+```{r}
+fit_rf2 |> collect_metrics()
+
+fit_rf2 |> 
+  show_best(n = 20, metric = "accuracy") |> 
+  select(-n, -std_err, -.config) |> 
+  gt::gt()
+
+bind_rows(
+  fit_rf2 |> select_best("accuracy") |> mutate(type = "accu"),
+  fit_rf2 |> select_best("mcc") |> mutate(type = "mcc"),
+  fit_rf2 |> select_best("npv") |> mutate(type = "npv"),
+  fit_rf2 |> select_best("roc_auc") |> mutate(type = "roc_auc")
+) |> gt::gt()
+```
+
+Mamy poprawe dokąłdności z 0.84 na 0.88 :)
+
+```{r}
+fit_rf2 %>%
+  collect_metrics() |> 
+  filter(mtry == 8, min_n > 10) |>
+  mutate(min_n = factor(min_n)) |> 
+  ggplot(aes(trees, mean, color = min_n)) +
+  geom_line(size = 1.5, alpha = 0.6) +
+  geom_point(size = 2) +
+  facet_wrap(~ .metric, scales = "free", nrow = 2) +
+#  scale_x_log10(labels = scales::label_number()) +
+  scale_color_viridis_d(option = "plasma", begin = .9, end = 0)
+
+
+fit_rf2 %>%
+  collect_metrics() |> 
+  filter(trees == 200) |> 
+  mutate(min_n = factor(min_n)) |> 
+  ggplot(aes(mtry, mean, color = min_n)) +
+  geom_line(size = 1.5, alpha = 0.6) +
+  geom_point(size = 2) +
+  facet_wrap(~ .metric, scales = "free", nrow = 2) 
+```
+
+Wybieramy najlepszy model, ale dalsza optymalizacja jest możliwa :)
+Natomiast musimy się już skopić na jednym parametrze oceny. np.
+`roc_auc`
+
+## Optymalizacja nr 3
+
+```{r}
+#| eval: false
+grid_rf3 <- 
+  crossing(mtry = 7:9, 
+           trees  = seq(160, 240, 20), 
+           min_n = 10:16)
+
+fit_rf3 <-
+  work_rf |>
+  tune_grid(resamples = folds,
+            grid = grid_rf3,
+            metrics = param_eval)
+
+save(grid_rf3, fit_rf3, file = "work_rf3.rdata")
+```
+
+```{r}
+load(file = "work_rf3.rdata")
+```
+
+## Sprawdzamy wyniki po raz trzeci
+
+```{r}
+fit_rf3 |> collect_metrics()
+
+fit_rf3 |> 
+  show_best(n = 20, metric = "accuracy") |> 
+  select(-n, -std_err, -.config) |> 
+  gt::gt()
+
+bind_rows(
+  fit_rf3 |> select_best("accuracy") |> mutate(type = "accu"),
+  fit_rf3 |> select_best("mcc") |> mutate(type = "mcc"),
+  fit_rf3 |> select_best("npv") |> mutate(type = "npv"),
+  fit_rf3 |> select_best("roc_auc") |> mutate(type = "roc_auc")
+) |> gt::gt()
+```
+
+Mamy poprawę dokładności z 0.84 na 0.88 :)
+
+```{r}
+fit_rf3 %>%
+  collect_metrics() |> 
+  filter(mtry == 9, min_n > 10) |>
+  mutate(min_n = factor(min_n)) |> 
+  ggplot(aes(trees, mean, color = min_n)) +
+  geom_line(size = 1.5, alpha = 0.6) +
+  geom_point(size = 2) +
+  facet_wrap(~ .metric, scales = "free", nrow = 2) +
+#  scale_x_log10(labels = scales::label_number()) +
+  scale_color_viridis_d(option = "plasma", begin = .9, end = 0)
+
+
+fit_rf3 %>%
+  collect_metrics() |> 
+  filter(trees == 240) |> 
+  mutate(min_n = factor(min_n)) |> 
+  ggplot(aes(mtry, mean, color = min_n)) +
+  geom_line(size = 1.5, alpha = 0.6) +
+  geom_point(size = 2) +
+  facet_wrap(~ .metric, scales = "free", nrow = 2) 
+```
+
+## Podsumowanie optymalizacji
+
+```{r}
+bind_rows(
+  fit_rf |> show_best("accuracy", n = 1) |> mutate(type = "0accu"),
+  fit_rf |> show_best("mcc", n = 1) |> mutate(type = "0mcc"),
+  fit_rf |> show_best("npv", n = 1) |> mutate(type = "0npv"),
+  fit_rf |> show_best("roc_auc", n=1) |> mutate(type = "0roc_auc"),
+  fit_rf2 |> show_best("accuracy", n=1) |> mutate(type = "2accu"),
+  fit_rf2 |> show_best("mcc", n = 1) |> mutate(type = "2mcc"),
+  fit_rf2 |> show_best("npv", n = 1) |> mutate(type = "2npv"),
+  fit_rf2 |> show_best("roc_auc", n = 1) |> mutate(type = "r2oc_auc"),
+  fit_rf3 |> show_best("accuracy", n = 1) |> mutate(type = "3accu"),
+  fit_rf3 |> show_best("mcc", n = 1) |> mutate(type = "3mcc"),
+  fit_rf3 |> show_best("npv", n = 1) |> mutate(type = "3npv"),
+  fit_rf3 |> show_best("roc_auc", n = 1) |> mutate(type = "3roc_auc")
+) |> 
+  select(-n, -std_err, -.config) |> 
+  arrange(.metric, mean) |> 
+  gt::gt()
+```
+
+Powiedzmy, że mamy najlepszy model, który nie powinien być nadmiernie
+dopasowany.
+
+## Ostateczny model
+
+```{r}
+
+# selecy best
+
+best_mod <- select_best(fit_rf3, metric = "accuracy")
+
+# update workflow
+
+best_work <- 
+  work_rf |> 
+  finalize_workflow(parameters = best_mod)
+  
+# fit model
+set.seed(222)
+best_fit <- 
+  best_work |> 
+  last_fit(split = air_split, 
+           metrics = param_eval)
+
+best_fit |> 
+  collect_metrics() |> 
+  gt::gt() |> 
+  gt::tab_header(title = "Statystyki modelu", 
+                 subtitle = "zbiór testowy")
+```
+
+## Podsumowanie wyników
+
+```{r}
+# parametry modelu 
+best_fit |> extract_workflow()
+
+# Wpływ zmiennych 
+library(vip)
+
+best_fit |> extract_fit_parsnip() |> vip(num_features = 36)
+
+best_fit |> 
+  extract_fit_parsnip() |> vip() |> _$data
+
+# Dokładność
+
+best_fit |> 
+  collect_predictions() |> 
+  roc_curve(ozone, .pred_Niskie) |> 
+  autoplot()
+```
+
+**Wnioski:**
+
+-   Najwierniejsze zmienne to nox i ws
+
+-   parametry modelu to mtry = , trees = , min_n =
+
+-   Uzyskano dokładność klasyfikacji na poziomie 88% na zbiorze
+    testowym. Pole powierzchni pod krzywą wyniosło 93.4 %.
