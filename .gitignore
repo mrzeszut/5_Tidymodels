@@ -1,5 +1,9 @@
 /.Rhistory
 /.Rproj.user
+
+\.quarto\
+*.html
+
 /5_Tidymodels.zip
 /Editor_mermaind.html
 /Editor_mermaind_files
